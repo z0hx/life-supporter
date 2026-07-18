@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;font-family:'Noto Sans JP',system-ui,sans-serif}</style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="a4" margin="0.85in" hint-size="100%,1200px">
+<div style="font-size:11px;letter-spacing:.14em;font-weight:700;color:#17845C">LIFE-SUPPORTER · 要件・仕様書 v1.0</div>
+<h1 style="font-size:26pt;font-weight:900;color:#14181a;margin:10px 0 4px;line-height:1.25">life-supporter<br>画面デザイン・要件・仕様</h1>
+<p style="color:#6b736c;font-size:10.5pt;margin:0 0 24px">2026年7月5日 · PWA(モバイル専用) · 日本語UI</p>
+
+<h2 style="font-size:14pt;font-weight:900;border-bottom:2px solid #14181a;padding-bottom:6px;margin:28px 0 12px">1. 概要と目的</h2>
+<p style="font-size:11pt;line-height:1.9;margin:0 0 10px">life-supporter は、日常生活を支援する個人向けPWA。第1弾として「メモ(気になる店・場所・買い物リストの一元管理)」と「店頭での単価計算」の2機能を提供する。将来的に家計簿・リマインダー等の機能を追加し、生活全般をサポートするツールへ成長させる。</p>
+<ul style="font-size:11pt;line-height:1.9;margin:0;padding-left:1.4em">
+<li>対象デバイス:スマートフォン(390px基準)。店頭での片手操作を最優先。</li>
+<li>ホーム画面から各機能へ遷移するハブ構成。将来機能の追加枠をホームに常設。</li>
+<li>トーン:シンプル・実用重視。</li>
+<li><b>ビジュアルデザイン(確定)</b>:案1c「やわらか実用」を採用。生成りの背景(#FAF6F0)×テラコッタのアクセント(#D97757)、丸ゴシック体(Zen Maru Gothic)、角丸の大きいカード、丸型チェックボックス。</li>
+</ul>
+
+<h2 style="font-size:14pt;font-weight:900;border-bottom:2px solid #14181a;padding-bottom:6px;margin:28px 0 12px">2. 機能要件 — メモ</h2>
+<p style="font-size:11pt;line-height:1.9;margin:0 0 8px">TVで見た行きたい店・場所、買い物リストなどを一元管理する。</p>
+<ul style="font-size:11pt;line-height:1.9;margin:0;padding-left:1.4em">
+<li><b>追加・完了・削除</b>:1行入力で即追加。チェックで完了(取り消し線+リスト下部へ)。スワイプまたはメニューで削除。</li>
+<li><b>カテゴリ</b>:「買い物」「行きたい店」「場所」「その他」の既定4種+ユーザー追加可。各メモに1つ設定。</li>
+<li><b>タグ</b>:各メモに複数設定可(例:#TVで紹介 #週末)。入力時は既存タグからの選択+新規作成。</li>
+<li><b>グルーピング表示</b>:「カテゴリごと / タグごと / グループなし」を切り替え。タグごと表示では複数タグを持つメモは各グループに表示、タグなしは「タグなし」グループへ。グループは折りたたみ可。</li>
+<li><b>ソート</b>:「作成日時 / 更新日時 / 手動」を選択(新しい順・古い順)。手動はドラッグハンドル(⠿)による並べ替え。優先度「高」フラグは各グループ内で常に先頭。</li>
+<li>グルーピング・ソートの選択状態は保持し、次回起動時も再現する。</li>
+<li><b>補足情報</b>:任意でメモ本文・出典(例:TVで紹介)・追加日を保持。</li>
+<li>完了済みは30日後に自動アーカイブ(設定で変更可)。</li>
+</ul>
+
+<h2 style="font-size:14pt;font-weight:900;border-bottom:2px solid #14181a;padding-bottom:6px;margin:28px 0 12px">3. 機能要件 — 単価計算</h2>
+<ul style="font-size:11pt;line-height:1.9;margin:0;padding-left:1.4em">
+<li><b>入力</b>:商品ごとに「価格(円)」「内容量」の2項目のみ。商品名は任意。数値キーパッドを自動表示。</li>
+<li><b>単位モード</b>:100gあたり / 100mlあたり / 1個あたり / 1枚あたり を切り替え(比較中の全商品に適用)。</li>
+<li><b>比較・最安判定</b>:2商品以上を並べて比較。入力と同時にリアルタイムで単価を計算し、最安の商品をハイライト+「◯% お得(差額 ¥x/単位)」を表示。商品は3つ以上追加可能。</li>
+<li><b>履歴</b>:比較結果を任意の名前(例:トイレットペーパー)で保存。履歴一覧から再表示・再利用できる。</li>
+<li>計算式:単価 = 価格 ÷ 内容量 × 基準量。表示は小数第1位まで。</li>
+</ul>
+
+<h2 style="font-size:14pt;font-weight:900;border-bottom:2px solid #14181a;padding-bottom:6px;margin:28px 0 12px">4. 画面構成</h2>
+<ul style="font-size:11pt;line-height:1.9;margin:0;padding-left:1.4em">
+<li><b>ホーム</b>:あいさつ+日付/メモカード(未完了の先頭2〜3件プレビュー+件数)/単価計算カード(前回の比較結果)/「今後の機能」プレースホルダー/設定。</li>
+<li><b>メモ一覧</b>:グルーピング切替(カテゴリ/タグ/なし)+ソート切替(作成日時/更新日時/手動)のコントロール/グループ見出し(件数・折りたたみ)/メモリスト(チェック・タグ表示・優先度)/追加ボタン(FAB)。</li>
+<li><b>メモ追加・編集</b>(モーダル):タイトル/カテゴリ選択(1つ)/タグ入力(既存から選択+新規作成、複数可)/優先度/補足メモ/作成・更新日時の表示。</li>
+<li><b>単価計算</b>:単位モード切替/商品カード(A, B, C…)/最安判定パネル/商品追加/保存・クリア。</li>
+<li><b>履歴一覧</b>:保存名+日付のリスト。タップで比較内容を復元。</li>
+<li><b>設定</b>:カテゴリ管理/アーカイブ設定/データのエクスポート(JSON・共有シート)・インポート・全削除/バックアップリマインド。</li>
+</ul>
+
+<h2 style="font-size:14pt;font-weight:900;border-bottom:2px solid #14181a;padding-bottom:6px;margin:28px 0 12px">5. 非機能要件・PWA仕様</h2>
+<ul style="font-size:11pt;line-height:1.9;margin:0;padding-left:1.4em">
+<li><b>オフライン動作</b>:Service Workerで全アセットをキャッシュ。店頭(電波が弱い環境)でも全機能が動作すること。</li>
+<li><b>データ保存</b>:端末ローカルのみ。サーバー不要・アカウント不要(詳細は6章)。</li>
+<li><b>インストール</b>:Web App Manifest(name: life-supporter、standalone表示、テーマカラー、192/512pxアイコン)。ホーム画面追加を促すバナー。</li>
+<li><b>性能</b>:起動から入力可能まで1秒以内。単価計算は入力毎に即時反映。</li>
+<li><b>操作性</b>:タップ領域は44px以上。片手・親指操作を想定し主要アクションは画面下部に配置。</li>
+</ul>
+
+<h2 style="font-size:14pt;font-weight:900;border-bottom:2px solid #14181a;padding-bottom:6px;margin:28px 0 12px">6. データ保存・バックアップ</h2>
+<p style="font-size:11pt;line-height:1.9;margin:0 0 8px"><b>ストレージ:IndexedDB を主、localStorage は補助。</b>localStorage は同期APIで書き込みが重く、容量が約5MBに制限され、文字列しか保存できないため、メモ・履歴の本体保存には採用しない。</p>
+<ul style="font-size:11pt;line-height:1.9;margin:0 0 12px;padding-left:1.4em">
+<li><b>IndexedDB</b>:メモ・比較履歴・カテゴリ/タグ定義を保存。非同期で高速、容量が大きく(数百MB以上)、オブジェクトをそのまま保存できる。薄いラッパーライブラリ(idb 等)の利用を想定。</li>
+<li><b>localStorage</b>:表示設定(ViewSettings)や最後に開いた画面など、軽量なUI状態のみ。</li>
+<li><b>永続化リクエスト</b>:<code style="background:#f4f5f3;padding:1px 5px;border-radius:4px">navigator.storage.persist()</code> を呼び、ブラウザによる自動削除(ストレージ逼迫時のeviction)からデータを保護する。特にiOS Safariは未使用PWAのデータを削除し得るため必須。</li>
+</ul>
+<p style="font-size:11pt;line-height:1.9;margin:0 0 8px"><b>エクスポート:JSON を正とする。</b>全データ+スキーマバージョンを1ファイルに書き出す(例:<code style="background:#f4f5f3;padding:1px 5px;border-radius:4px">life-supporter-backup-2026-07-05.json</code>)。人間が読め、将来のインポート互換(バージョン判定+マイグレーション)を作りやすい。</p>
+<ul style="font-size:11pt;line-height:1.9;margin:0 0 12px;padding-left:1.4em">
+<li><b>受け渡し</b>:Web Share API(<code style="background:#f4f5f3;padding:1px 5px;border-radius:4px">navigator.share</code>)でファイル共有シートを開き、AirDrop・LINE・クラウドドライブ等へ直接送れるようにする(非対応環境はダウンロードにフォールバック)。機種変更時は新端末でファイルを選んでインポート。</li>
+<li><b>インポート</b>:ファイル選択→スキーマバージョン検証→「置き換え / 追記(マージ)」を選択→取り込み結果を件数で表示。</li>
+<li><b>バックアップ促進</b>:最終エクスポートから90日経過などの条件で、設定画面にリマインドを表示。</li>
+</ul>
+<p style="font-size:11pt;line-height:1.9;margin:0 0 8px;color:#6b736c">検討した代替案:QRコード(容量不足)、File System Access API での自動保存(iOS非対応)、クラウド同期(アカウント管理が必要になるため将来拡張へ)。いずれも初期リリースでは JSON+共有シートが最適。</p>
+
+<h2 style="font-size:14pt;font-weight:900;border-bottom:2px solid #14181a;padding-bottom:6px;margin:28px 0 12px">7. データモデル(案)</h2>
+<pre style="font:9.5pt/1.7 ui-monospace,Menlo,monospace;background:#f4f5f3;border:1px solid #e3e6e2;border-radius:8px;padding:14px 16px;overflow:auto">Memo {
+  id, title, category,        // "shopping" | "restaurant" | "place" | "other" | custom
+  tags: [string],             // 複数可(例: ["TVで紹介", "カレー"])
+  priority,                   // "high" | "normal"
+  note?, source?,             // 補足・出典
+  done, doneAt?,
+  createdAt, updatedAt, sortOrder
+}
+
+ViewSettings {                // 表示状態(永続化)
+  groupBy,                    // "category" | "tag" | "none"
+  sortBy,                     // "createdAt" | "updatedAt" | "manual"
+  sortDir                     // "desc" | "asc"
+}
+
+Comparison {
+  id, name?,                  // 保存名(例: トイレットペーパー)
+  unitMode,                   // "per100g" | "per100ml" | "perItem" | "perSheet"
+  items: [{ label?, price, amount }],
+  savedAt
+}</pre>
+
+<h2 style="font-size:14pt;font-weight:900;border-bottom:2px solid #14181a;padding-bottom:6px;margin:28px 0 12px">8. 将来の拡張</h2>
+<ul style="font-size:11pt;line-height:1.9;margin:0;padding-left:1.4em">
+<li>家計簿(単価計算の履歴と連携し、購入記録として取り込む)。</li>
+<li>リマインダー(メモに日時を付けて通知 — Push API)。</li>
+<li>行きたい店・場所の地図表示(位置情報との連携)。</li>
+<li>複数端末同期(任意のクラウド同期。ローカルファーストは維持)。</li>
+</ul>
+</x-import>
+</x-dc>
+</body>
+</html>

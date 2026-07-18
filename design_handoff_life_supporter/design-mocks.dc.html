@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&amp;family=Zen+Maru+Gothic:wght@500;700;900&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#f0eee9;font-family:'Noto Sans JP',system-ui,sans-serif}.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}.dv-tname{font:600 13px/1.2 system-ui,sans-serif;color:#1a1a1a}.dv-opts{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.55)}.dv-card{max-width:100%;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden}.dv-opt:target .dv-oid{background:#2a78d6;color:#fff}.dv-next{margin:22px 0 0;font:12px/1.5 system-ui,sans-serif;color:rgba(0,0,0,.5)}</style>
+</helmet>
+
+<section class="dv-turn" id="t3">
+<div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">案<a class="dv-oid" href="#1c">1c</a>採用 — メモのグルーピング/ソート/編集を1cスタイルで展開</span></div>
+<div style="max-width:1180px;margin:0 0 24px;font:13px/1.8 'Noto Sans JP',sans-serif;color:#3a3a3a;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:8px;padding:18px 22px">
+<div style="font-weight:700;margin-bottom:6px">デザイン確定:生成り×テラコッタ(やわらか実用)</div>
+<div>ターン2で検討した機能UIを採用スタイルで再構成。<a class="dv-oid" href="#3a">3a</a>は常設コントロールバー(<a class="dv-oid" href="#2a">2a</a>方式・カテゴリごと表示)、<a class="dv-oid" href="#3b">3b</a>はボトムシート(<a class="dv-oid" href="#2b">2b</a>方式・タグごと表示)、<a class="dv-oid" href="#3c">3c</a>は追加・編集画面。<a class="dv-oid" href="#3a">3a</a>と<a class="dv-oid" href="#3b">3b</a>はどちらか一方を採用してください。</div>
+</div>
+<div class="dv-opts" style="font-family:'Zen Maru Gothic','Noto Sans JP',sans-serif">
+
+<!-- ============ 3a 常設コントロールバー(1cスタイル) ============ -->
+<div class="dv-opt" id="3a">
+<div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>常設コントロールバー — カテゴリごと表示・更新日時順</div>
+<div class="dv-card" style="padding:24px;background:#efe9df">
+<div style="width:320px;background:#FAF6F0;border-radius:28px;border:1px solid #e6ddd0;overflow:hidden;display:flex;flex-direction:column;height:720px;position:relative">
+<div style="display:flex;justify-content:space-between;padding:14px 22px 0;font-size:12px;font-weight:700;color:#4a4238"><span>9:41</span><span>●●●</span></div>
+<div style="padding:16px 22px 10px;display:flex;align-items:center;gap:12px"><span style="font-size:18px;color:#a3968a">‹</span><span style="font-size:20px;font-weight:900;color:#4a4238">メモ</span><span style="margin-left:auto;color:#a3968a;font-size:15px">🔍</span></div>
+<div style="display:flex;align-items:center;gap:8px;padding:0 18px 12px">
+<div style="display:flex;background:#f3ece2;border-radius:999px;padding:3px;gap:2px">
+<span style="white-space:nowrap;font-size:11.5px;font-weight:900;padding:5px 12px;border-radius:999px;background:#4a4238;color:#fff">カテゴリ</span>
+<span style="white-space:nowrap;font-size:11.5px;font-weight:700;padding:5px 12px;color:#8a7d6e">タグ</span>
+<span style="white-space:nowrap;font-size:11.5px;font-weight:700;padding:5px 12px;color:#8a7d6e">なし</span>
+</div>
+<span style="margin-left:auto;white-space:nowrap;font-size:11.5px;font-weight:900;color:#D97757;background:#fff;border:1px solid #e6ddd0;border-radius:999px;padding:6px 12px">↓ 更新日時 ▾</span>
+</div>
+<div style="padding:0 18px;display:flex;flex-direction:column;gap:14px;overflow:hidden">
+<div>
+<div style="display:flex;align-items:center;gap:6px;margin-bottom:7px"><span style="white-space:nowrap;font-size:12px;font-weight:900;color:#D97757">🛒 買い物</span><span style="font-size:11px;color:#c5b8a8;font-weight:700">3</span><span style="flex:1"></span><span style="font-size:11px;color:#c5b8a8">▾</span></div>
+<div style="background:#fff;border-radius:18px;box-shadow:0 2px 6px rgba(74,66,56,.06);overflow:hidden">
+<div style="padding:13px 16px;display:flex;gap:10px;align-items:flex-start;border-bottom:1px solid #f3ece2"><span style="width:17px;height:17px;border:2px solid #dfd4c4;border-radius:50%;flex:none;margin-top:2px"></span><div style="flex:1"><div style="font-size:13.5px;color:#4a4238;font-weight:700">牛乳・卵・食パンを買う</div><div style="display:flex;gap:5px;margin-top:5px;align-items:center"><span style="white-space:nowrap;font-size:10px;font-weight:900;color:#D97757;background:#fdeee6;border-radius:999px;padding:2px 8px">#スーパー</span><span style="white-space:nowrap;font-size:10px;font-weight:900;color:#8a7d6e;background:#f3ece2;border-radius:999px;padding:2px 8px">#今週中</span><span style="font-size:10px;color:#c5b8a8;margin-left:auto">10分前</span></div></div></div>
+<div style="padding:13px 16px;display:flex;gap:10px;align-items:flex-start"><span style="width:17px;height:17px;border:2px solid #dfd4c4;border-radius:50%;flex:none;margin-top:2px"></span><div style="flex:1"><div style="font-size:13.5px;color:#4a4238;font-weight:700">洗剤の詰め替え(特売チェック)</div><div style="display:flex;gap:5px;margin-top:5px;align-items:center"><span style="white-space:nowrap;font-size:10px;font-weight:900;color:#D97757;background:#fdeee6;border-radius:999px;padding:2px 8px">#ドラッグストア</span><span style="font-size:10px;color:#c5b8a8;margin-left:auto">昨日</span></div></div></div>
+</div>
+</div>
+<div>
+<div style="display:flex;align-items:center;gap:6px;margin-bottom:7px"><span style="white-space:nowrap;font-size:12px;font-weight:900;color:#b0731d">🍜 行きたい店</span><span style="font-size:11px;color:#c5b8a8;font-weight:700">2</span><span style="flex:1"></span><span style="font-size:11px;color:#c5b8a8">▾</span></div>
+<div style="background:#fff;border-radius:18px;box-shadow:0 2px 6px rgba(74,66,56,.06);overflow:hidden">
+<div style="padding:13px 16px;display:flex;gap:10px;align-items:flex-start;border-bottom:1px solid #f3ece2"><span style="width:17px;height:17px;border:2px solid #dfd4c4;border-radius:50%;flex:none;margin-top:2px"></span><div style="flex:1"><div style="font-size:13.5px;color:#4a4238;font-weight:700">代々木「スパイス堂」カレー</div><div style="display:flex;gap:5px;margin-top:5px;align-items:center"><span style="white-space:nowrap;font-size:10px;font-weight:900;color:#b0731d;background:#fef3e2;border-radius:999px;padding:2px 8px">#TVで紹介</span><span style="white-space:nowrap;font-size:10px;font-weight:900;color:#8a7d6e;background:#f3ece2;border-radius:999px;padding:2px 8px">#カレー</span><span style="font-size:10px;color:#c5b8a8;margin-left:auto">7/2</span></div></div></div>
+<div style="padding:13px 16px;display:flex;gap:10px;align-items:flex-start"><span style="width:17px;height:17px;border:2px solid #dfd4c4;border-radius:50%;flex:none;margin-top:2px"></span><div style="flex:1"><div style="font-size:13.5px;color:#4a4238;font-weight:700">中目黒のパン屋さん</div><div style="display:flex;gap:5px;margin-top:5px;align-items:center"><span style="white-space:nowrap;font-size:10px;font-weight:900;color:#8a7d6e;background:#f3ece2;border-radius:999px;padding:2px 8px">#週末</span><span style="font-size:10px;color:#c5b8a8;margin-left:auto">6/29</span></div></div></div>
+</div>
+</div>
+<div>
+<div style="display:flex;align-items:center;gap:6px;margin-bottom:7px"><span style="white-space:nowrap;font-size:12px;font-weight:900;color:#4d8a5c">🗺 場所</span><span style="font-size:11px;color:#c5b8a8;font-weight:700">1</span><span style="flex:1"></span><span style="font-size:11px;color:#c5b8a8">▾</span></div>
+<div style="background:#fff;border-radius:18px;box-shadow:0 2px 6px rgba(74,66,56,.06)">
+<div style="padding:13px 16px;display:flex;gap:10px;align-items:flex-start"><span style="width:17px;height:17px;border:2px solid #dfd4c4;border-radius:50%;flex:none;margin-top:2px"></span><div style="flex:1"><div style="font-size:13.5px;color:#4a4238;font-weight:700">奥多摩の日帰り温泉</div><div style="display:flex;gap:5px;margin-top:5px;align-items:center"><span style="white-space:nowrap;font-size:10px;font-weight:900;color:#4d8a5c;background:#ebf3ec;border-radius:999px;padding:2px 8px">#雑誌で見た</span><span style="font-size:10px;color:#c5b8a8;margin-left:auto">6/20</span></div></div></div>
+</div>
+</div>
+</div>
+<div style="position:absolute;left:18px;right:18px;bottom:16px;background:#D97757;color:#fff;border-radius:18px;padding:14px;text-align:center;font-size:14px;font-weight:900;box-shadow:0 6px 16px rgba(217,119,87,.35)">＋ メモを追加</div>
+</div>
+</div>
+</div>
+
+<!-- ============ 3b ボトムシート(1cスタイル) ============ -->
+<div class="dv-opt" id="3b">
+<div class="dv-olabel"><a class="dv-oid" href="#3b">3b</a>「表示」ボタン+ボトムシート — タグごと表示・シート展開状態</div>
+<div class="dv-card" style="padding:24px;background:#efe9df">
+<div style="width:320px;background:#FAF6F0;border-radius:28px;border:1px solid #e6ddd0;overflow:hidden;display:flex;flex-direction:column;height:720px;position:relative">
+<div style="display:flex;justify-content:space-between;padding:14px 22px 0;font-size:12px;font-weight:700;color:#4a4238"><span>9:41</span><span>●●●</span></div>
+<div style="padding:16px 22px 10px;display:flex;align-items:center;gap:12px"><span style="font-size:18px;color:#a3968a">‹</span><span style="font-size:20px;font-weight:900;color:#4a4238">メモ</span><span style="margin-left:auto;white-space:nowrap;font-size:12px;font-weight:900;color:#D97757;background:#fff;border:1px solid #e6ddd0;border-radius:999px;padding:6px 14px">☰ 表示</span></div>
+<div style="padding:0 18px;display:flex;flex-direction:column;gap:14px">
+<div>
+<div style="display:flex;align-items:center;gap:6px;margin-bottom:7px"><span style="font-size:12px;font-weight:900;color:#b0731d">#TVで紹介</span><span style="font-size:11px;color:#c5b8a8;font-weight:700">2</span></div>
+<div style="background:#fff;border-radius:18px;box-shadow:0 2px 6px rgba(74,66,56,.06);overflow:hidden">
+<div style="padding:13px 16px;display:flex;gap:10px;align-items:center;border-bottom:1px solid #f3ece2"><span style="width:17px;height:17px;border:2px solid #dfd4c4;border-radius:50%;flex:none"></span><div style="flex:1"><div style="font-size:13.5px;color:#4a4238;font-weight:700">代々木「スパイス堂」カレー</div><div style="font-size:10px;color:#c5b8a8;margin-top:2px">行きたい店 · 作成 7/2</div></div></div>
+<div style="padding:13px 16px;display:flex;gap:10px;align-items:center"><span style="width:17px;height:17px;border:2px solid #dfd4c4;border-radius:50%;flex:none"></span><div style="flex:1"><div style="font-size:13.5px;color:#4a4238;font-weight:700">札幌の味噌ラーメン特集の店</div><div style="font-size:10px;color:#c5b8a8;margin-top:2px">行きたい店 · 作成 6/25</div></div></div>
+</div>
+</div>
+<div>
+<div style="display:flex;align-items:center;gap:6px;margin-bottom:7px"><span style="font-size:12px;font-weight:900;color:#D97757">#スーパー</span><span style="font-size:11px;color:#c5b8a8;font-weight:700">1</span></div>
+<div style="background:#fff;border-radius:18px;box-shadow:0 2px 6px rgba(74,66,56,.06)">
+<div style="padding:13px 16px;display:flex;gap:10px;align-items:center"><span style="width:17px;height:17px;border:2px solid #dfd4c4;border-radius:50%;flex:none"></span><div style="flex:1"><div style="font-size:13.5px;color:#4a4238;font-weight:700">牛乳・卵・食パンを買う</div><div style="font-size:10px;color:#c5b8a8;margin-top:2px">買い物 · 作成 今日</div></div></div>
+</div>
+</div>
+<div style="opacity:.4">
+<div style="display:flex;align-items:center;gap:6px;margin-bottom:7px"><span style="font-size:12px;font-weight:900;color:#8a7d6e">タグなし</span><span style="font-size:11px;color:#c5b8a8;font-weight:700">3</span></div>
+<div style="background:#fff;border-radius:18px;box-shadow:0 2px 6px rgba(74,66,56,.06);padding:13px 16px;font-size:13.5px;color:#4a4238;font-weight:700">奥多摩の日帰り温泉</div>
+</div>
+</div>
+<div style="position:absolute;inset:0;background:rgba(74,66,56,.35)"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;background:#FAF6F0;border-radius:24px 24px 28px 28px;padding:14px 22px 22px;box-shadow:0 -8px 30px rgba(74,66,56,.25)">
+<div style="width:36px;height:4px;border-radius:2px;background:#dfd4c4;margin:0 auto 14px"></div>
+<div style="font-size:14px;font-weight:900;color:#4a4238;margin-bottom:12px">表示設定</div>
+<div style="font-size:11px;font-weight:900;color:#a3968a;margin-bottom:6px">グルーピング</div>
+<div style="display:flex;background:#f3ece2;border-radius:999px;padding:3px;gap:2px;margin-bottom:14px">
+<span style="flex:1;text-align:center;white-space:nowrap;font-size:12px;font-weight:700;padding:7px 0;color:#8a7d6e">カテゴリ</span>
+<span style="flex:1;text-align:center;white-space:nowrap;font-size:12px;font-weight:900;padding:7px 0;border-radius:999px;background:#4a4238;color:#fff">タグ</span>
+<span style="flex:1;text-align:center;white-space:nowrap;font-size:12px;font-weight:700;padding:7px 0;color:#8a7d6e">なし</span>
+</div>
+<div style="font-size:11px;font-weight:900;color:#a3968a;margin-bottom:6px">並び順</div>
+<div style="background:#fff;border-radius:18px;box-shadow:0 2px 6px rgba(74,66,56,.06);overflow:hidden">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #f3ece2;font-size:13px;font-weight:700;color:#4a4238"><span>作成日時(新しい順)</span><span style="width:18px;height:18px;border-radius:50%;border:2px solid #dfd4c4"></span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #f3ece2;font-size:13px;font-weight:900;color:#4a4238"><span>更新日時(新しい順)</span><span style="width:18px;height:18px;border-radius:50%;border:5.5px solid #D97757"></span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;font-size:13px;font-weight:700;color:#4a4238"><span>手動(ドラッグで並べ替え)</span><span style="width:18px;height:18px;border-radius:50%;border:2px solid #dfd4c4"></span></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ============ 3c 追加・編集(1cスタイル) ============ -->
+<div class="dv-opt" id="3c">
+<div class="dv-olabel"><a class="dv-oid" href="#3c">3c</a>メモ追加・編集 — カテゴリ1つ+タグ複数+優先度</div>
+<div class="dv-card" style="padding:24px;background:#efe9df">
+<div style="width:320px;background:#FAF6F0;border-radius:28px;border:1px solid #e6ddd0;overflow:hidden;display:flex;flex-direction:column;height:720px">
+<div style="display:flex;justify-content:space-between;padding:14px 22px 0;font-size:12px;font-weight:700;color:#4a4238"><span>9:41</span><span>●●●</span></div>
+<div style="padding:16px 22px 12px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;font-weight:700;color:#a3968a">キャンセル</span><span style="font-size:16px;font-weight:900;color:#4a4238">メモを追加</span><span style="font-size:13px;font-weight:900;color:#D97757">保存</span></div>
+<div style="padding:0 18px;display:flex;flex-direction:column;gap:14px">
+<div style="background:#fff;border-radius:18px;border:2px solid #D97757;padding:13px 16px;box-shadow:0 2px 6px rgba(74,66,56,.06)"><div style="font-size:15px;color:#4a4238;font-weight:700">代々木「スパイス堂」カレー<span style="display:inline-block;width:2px;height:16px;background:#D97757;vertical-align:-3px;margin-left:1px"></span></div></div>
+<div>
+<div style="font-size:11px;font-weight:900;color:#a3968a;margin-bottom:7px">カテゴリ(1つ選択)</div>
+<div style="display:flex;gap:7px;flex-wrap:wrap">
+<span style="white-space:nowrap;font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;background:#fff;border:1px solid #e6ddd0;color:#8a7d6e">🛒 買い物</span>
+<span style="white-space:nowrap;font-size:12px;font-weight:900;padding:7px 14px;border-radius:999px;background:#D97757;color:#fff">🍜 行きたい店 ✓</span>
+<span style="white-space:nowrap;font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;background:#fff;border:1px solid #e6ddd0;color:#8a7d6e">🗺 場所</span>
+<span style="white-space:nowrap;font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;background:#fff;border:1px solid #e6ddd0;color:#8a7d6e">その他</span>
+<span style="white-space:nowrap;font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;border:2px dashed #dfd4c4;color:#c5b8a8">＋ 追加</span>
+</div>
+</div>
+<div>
+<div style="font-size:11px;font-weight:900;color:#a3968a;margin-bottom:7px">タグ(複数可)</div>
+<div style="background:#fff;border-radius:18px;border:1px solid #e6ddd0;padding:12px 14px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+<span style="white-space:nowrap;font-size:11.5px;font-weight:900;color:#b0731d;background:#fef3e2;border-radius:999px;padding:4px 10px">#TVで紹介 ✕</span>
+<span style="white-space:nowrap;font-size:11.5px;font-weight:900;color:#b0731d;background:#fef3e2;border-radius:999px;padding:4px 10px">#カレー ✕</span>
+<span style="font-size:13px;color:#c5b8a8">タグを入力…</span>
+</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+<span style="white-space:nowrap;font-size:11px;font-weight:700;color:#8a7d6e;background:#f3ece2;border-radius:999px;padding:4px 10px">#週末</span>
+<span style="white-space:nowrap;font-size:11px;font-weight:700;color:#8a7d6e;background:#f3ece2;border-radius:999px;padding:4px 10px">#スーパー</span>
+<span style="white-space:nowrap;font-size:11px;font-weight:700;color:#8a7d6e;background:#f3ece2;border-radius:999px;padding:4px 10px">#ドラッグストア</span>
+<span style="white-space:nowrap;font-size:11px;font-weight:700;color:#8a7d6e;background:#f3ece2;border-radius:999px;padding:4px 10px">#雑誌で見た</span>
+</div>
+</div>
+<div>
+<div style="font-size:11px;font-weight:900;color:#a3968a;margin-bottom:7px">優先度</div>
+<div style="display:flex;background:#f3ece2;border-radius:999px;padding:3px;gap:2px;width:180px">
+<span style="flex:1;text-align:center;white-space:nowrap;font-size:12px;font-weight:900;padding:7px 0;border-radius:999px;background:#fff;color:#4a4238;box-shadow:0 1px 2px rgba(74,66,56,.1)">ふつう</span>
+<span style="flex:1;text-align:center;white-space:nowrap;font-size:12px;font-weight:700;padding:7px 0;color:#8a7d6e">高</span>
+</div>
+</div>
+<div>
+<div style="font-size:11px;font-weight:900;color:#a3968a;margin-bottom:7px">補足メモ(任意)</div>
+<div style="background:#fff;border-radius:18px;border:1px solid #e6ddd0;padding:13px 16px;font-size:13px;color:#c5b8a8;min-height:56px">出典やURL、営業時間など…</div>
+</div>
+<div style="font-size:11px;color:#c5b8a8">作成 2026/07/05 10:24 · 更新 —</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">次はこんな指示ができます: 「<a class="dv-oid" href="#3a">3a</a>を採用」 · 「単価計算の履歴画面・設定画面(エクスポート)も1cスタイルで」 · 「触れるプロトタイプに」</p>
+</section>
+
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">メモ — カテゴリ/タグのグルーピング表示とソート</span></div>
+<div style="max-width:1180px;margin:0 0 24px;font:13px/1.8 'Noto Sans JP',sans-serif;color:#3a3a3a;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:8px;padding:18px 22px">
+<div style="font-weight:700;margin-bottom:6px">追加要件の反映</div>
+<div>メモに「カテゴリ(1つ)+タグ(複数)」を設定可能に。表示は「カテゴリごと / タグごと / グループなし」を切り替え、ソートは「作成日時 / 更新日時 / 手動」に対応。<a class="dv-oid" href="#2a">2a</a>は画面上部の常設コントロールバー案、<a class="dv-oid" href="#2b">2b</a>は「表示」ボタン+ボトムシートでリストを広く使う案(タグごとグルーピングの表示例)。スタイルは<a class="dv-oid" href="#1a">1a</a>ベースで作成しています。</div>
+</div>
+<div class="dv-opts">
+
+<!-- ============ 2a 常設コントロールバー ============ -->
+<div class="dv-opt" id="2a">
+<div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>常設コントロールバー — グループ切替とソートが常に見えている(カテゴリごと表示)</div>
+<div class="dv-card" style="padding:24px;background:#e9ecf1">
+<div style="width:320px;background:#F5F7FA;border-radius:24px;border:1px solid #dde2e9;overflow:hidden;display:flex;flex-direction:column;height:720px;position:relative">
+<div style="display:flex;justify-content:space-between;padding:14px 20px 0;font-size:12px;font-weight:700;color:#1c2430"><span>9:41</span><span>●●●</span></div>
+<div style="padding:14px 20px 10px;display:flex;align-items:center;gap:12px"><span style="font-size:18px;color:#7a8494">‹</span><span style="font-size:19px;font-weight:900;color:#1c2430">メモ</span><span style="margin-left:auto;color:#7a8494;font-size:15px">🔍</span></div>
+<div style="display:flex;align-items:center;gap:8px;padding:0 16px 10px">
+<div style="display:flex;background:#e6eaf0;border-radius:10px;padding:3px;gap:2px">
+<span style="white-space:nowrap;font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:8px;background:#fff;color:#1c2430;box-shadow:0 1px 2px rgba(0,0,0,.08)">カテゴリ</span>
+<span style="white-space:nowrap;font-size:11.5px;padding:5px 10px;color:#7a8494">タグ</span>
+<span style="white-space:nowrap;font-size:11.5px;padding:5px 10px;color:#7a8494">なし</span>
+</div>
+<span style="margin-left:auto;white-space:nowrap;font-size:11.5px;font-weight:700;color:#2A6FDB;background:#fff;border:1px solid #dde2e9;border-radius:10px;padding:6px 10px">↓ 更新日時 ▾</span>
+</div>
+<div style="padding:0 16px 16px;display:flex;flex-direction:column;gap:14px;overflow:hidden">
+<div>
+<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px"><span style="font-size:12px;font-weight:900;color:#2A6FDB">買い物</span><span style="font-size:11px;color:#9aa4b2;font-weight:700">3</span><span style="flex:1;height:1px;background:#dde2e9"></span><span style="font-size:11px;color:#c2cbd8">▾</span></div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="background:#fff;border-radius:14px;border:1px solid #e3e8ef;padding:12px 14px;display:flex;gap:10px;align-items:flex-start"><span style="width:18px;height:18px;border:1.5px solid #c2cbd8;border-radius:5px;flex:none;margin-top:1px"></span><div style="flex:1"><div style="font-size:14px;color:#1c2430;font-weight:500">牛乳・卵・食パンを買う</div><div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap"><span style="font-size:10px;font-weight:700;color:#2A6FDB;background:#e8f0fd;border-radius:4px;padding:1px 6px">#スーパー</span><span style="font-size:10px;font-weight:700;color:#7a8494;background:#eef1f5;border-radius:4px;padding:1px 6px">#今週中</span><span style="font-size:10px;color:#9aa4b2;margin-left:auto">更新 10分前</span></div></div></div>
+<div style="background:#fff;border-radius:14px;border:1px solid #e3e8ef;padding:12px 14px;display:flex;gap:10px;align-items:flex-start"><span style="width:18px;height:18px;border:1.5px solid #c2cbd8;border-radius:5px;flex:none;margin-top:1px"></span><div style="flex:1"><div style="font-size:14px;color:#1c2430;font-weight:500">洗剤の詰め替え(特売チェック)</div><div style="display:flex;gap:5px;margin-top:5px"><span style="font-size:10px;font-weight:700;color:#2A6FDB;background:#e8f0fd;border-radius:4px;padding:1px 6px">#ドラッグストア</span><span style="font-size:10px;color:#9aa4b2;margin-left:auto">更新 昨日</span></div></div></div>
+</div>
+</div>
+<div>
+<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px"><span style="font-size:12px;font-weight:900;color:#b0731d">行きたい店</span><span style="font-size:11px;color:#9aa4b2;font-weight:700">2</span><span style="flex:1;height:1px;background:#dde2e9"></span><span style="font-size:11px;color:#c2cbd8">▾</span></div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="background:#fff;border-radius:14px;border:1px solid #e3e8ef;padding:12px 14px;display:flex;gap:10px;align-items:flex-start"><span style="width:18px;height:18px;border:1.5px solid #c2cbd8;border-radius:5px;flex:none;margin-top:1px"></span><div style="flex:1"><div style="font-size:14px;color:#1c2430;font-weight:500">代々木「スパイス堂」カレー</div><div style="display:flex;gap:5px;margin-top:5px"><span style="font-size:10px;font-weight:700;color:#b0731d;background:#fef3e2;border-radius:4px;padding:1px 6px">#TVで紹介</span><span style="font-size:10px;font-weight:700;color:#7a8494;background:#eef1f5;border-radius:4px;padding:1px 6px">#カレー</span><span style="font-size:10px;color:#9aa4b2;margin-left:auto">更新 7/2</span></div></div></div>
+<div style="background:#fff;border-radius:14px;border:1px solid #e3e8ef;padding:12px 14px;display:flex;gap:10px;align-items:flex-start"><span style="width:18px;height:18px;border:1.5px solid #c2cbd8;border-radius:5px;flex:none;margin-top:1px"></span><div style="flex:1"><div style="font-size:14px;color:#1c2430;font-weight:500">中目黒のパン屋さん</div><div style="display:flex;gap:5px;margin-top:5px"><span style="font-size:10px;font-weight:700;color:#7a8494;background:#eef1f5;border-radius:4px;padding:1px 6px">#週末</span><span style="font-size:10px;color:#9aa4b2;margin-left:auto">更新 6/29</span></div></div></div>
+</div>
+</div>
+<div>
+<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px"><span style="font-size:12px;font-weight:900;color:#1F8A5B">場所</span><span style="font-size:11px;color:#9aa4b2;font-weight:700">1</span><span style="flex:1;height:1px;background:#dde2e9"></span><span style="font-size:11px;color:#c2cbd8">▾</span></div>
+<div style="background:#fff;border-radius:14px;border:1px solid #e3e8ef;padding:12px 14px;display:flex;gap:10px;align-items:flex-start"><span style="width:18px;height:18px;border:1.5px solid #c2cbd8;border-radius:5px;flex:none;margin-top:1px"></span><div style="flex:1"><div style="font-size:14px;color:#1c2430;font-weight:500">奥多摩の日帰り温泉</div><div style="display:flex;gap:5px;margin-top:5px"><span style="font-size:10px;font-weight:700;color:#1F8A5B;background:#e9f7ef;border-radius:4px;padding:1px 6px">#雑誌で見た</span><span style="font-size:10px;color:#9aa4b2;margin-left:auto">更新 6/20</span></div></div></div>
+</div>
+</div>
+<div style="position:absolute;right:18px;bottom:18px;width:56px;height:56px;border-radius:50%;background:#2A6FDB;color:#fff;display:grid;place-items:center;font-size:26px;box-shadow:0 6px 16px rgba(42,111,219,.4)">＋</div>
+</div>
+</div>
+</div>
+
+<!-- ============ 2b 表示ボタン+ボトムシート ============ -->
+<div class="dv-opt" id="2b">
+<div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>「表示」ボタン+ボトムシート — リストを広く使う(タグごと表示の例・シート展開状態)</div>
+<div class="dv-card" style="padding:24px;background:#e9ecf1">
+<div style="width:320px;background:#F5F7FA;border-radius:24px;border:1px solid #dde2e9;overflow:hidden;display:flex;flex-direction:column;height:720px;position:relative">
+<div style="display:flex;justify-content:space-between;padding:14px 20px 0;font-size:12px;font-weight:700;color:#1c2430"><span>9:41</span><span>●●●</span></div>
+<div style="padding:14px 20px 10px;display:flex;align-items:center;gap:12px"><span style="font-size:18px;color:#7a8494">‹</span><span style="font-size:19px;font-weight:900;color:#1c2430">メモ</span><span style="margin-left:auto;white-space:nowrap;font-size:12px;font-weight:700;color:#2A6FDB;background:#fff;border:1px solid #dde2e9;border-radius:10px;padding:6px 12px">☰ 表示</span></div>
+<div style="padding:0 16px;display:flex;flex-direction:column;gap:14px">
+<div>
+<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px"><span style="font-size:12px;font-weight:900;color:#2A6FDB">#TVで紹介</span><span style="font-size:11px;color:#9aa4b2;font-weight:700">2</span><span style="flex:1;height:1px;background:#dde2e9"></span></div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="background:#fff;border-radius:14px;border:1px solid #e3e8ef;padding:12px 14px;display:flex;gap:10px;align-items:center"><span style="width:18px;height:18px;border:1.5px solid #c2cbd8;border-radius:5px;flex:none"></span><div style="flex:1"><div style="font-size:14px;color:#1c2430;font-weight:500">代々木「スパイス堂」カレー</div><div style="font-size:10px;color:#9aa4b2;margin-top:3px">行きたい店 · 作成 7/2</div></div></div>
+<div style="background:#fff;border-radius:14px;border:1px solid #e3e8ef;padding:12px 14px;display:flex;gap:10px;align-items:center"><span style="width:18px;height:18px;border:1.5px solid #c2cbd8;border-radius:5px;flex:none"></span><div style="flex:1"><div style="font-size:14px;color:#1c2430;font-weight:500">札幌の味噌ラーメン特集の店</div><div style="font-size:10px;color:#9aa4b2;margin-top:3px">行きたい店 · 作成 6/25</div></div></div>
+</div>
+</div>
+<div>
+<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px"><span style="font-size:12px;font-weight:900;color:#2A6FDB">#スーパー</span><span style="font-size:11px;color:#9aa4b2;font-weight:700">1</span><span style="flex:1;height:1px;background:#dde2e9"></span></div>
+<div style="background:#fff;border-radius:14px;border:1px solid #e3e8ef;padding:12px 14px;display:flex;gap:10px;align-items:center"><span style="width:18px;height:18px;border:1.5px solid #c2cbd8;border-radius:5px;flex:none"></span><div style="flex:1"><div style="font-size:14px;color:#1c2430;font-weight:500">牛乳・卵・食パンを買う</div><div style="font-size:10px;color:#9aa4b2;margin-top:3px">買い物 · 作成 今日</div></div></div>
+</div>
+<div style="opacity:.35">
+<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px"><span style="font-size:12px;font-weight:900;color:#7a8494">タグなし</span><span style="font-size:11px;color:#9aa4b2;font-weight:700">3</span><span style="flex:1;height:1px;background:#dde2e9"></span></div>
+<div style="background:#fff;border-radius:14px;border:1px solid #e3e8ef;padding:12px 14px;font-size:14px;color:#1c2430">奥多摩の日帰り温泉</div>
+</div>
+</div>
+<div style="position:absolute;inset:0;background:rgba(28,36,48,.35)"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:20px 20px 24px 24px;padding:14px 20px 22px;box-shadow:0 -8px 30px rgba(28,36,48,.2)">
+<div style="width:36px;height:4px;border-radius:2px;background:#dde2e9;margin:0 auto 14px"></div>
+<div style="font-size:14px;font-weight:900;color:#1c2430;margin-bottom:12px">表示設定</div>
+<div style="font-size:11px;font-weight:700;color:#9aa4b2;margin-bottom:6px">グルーピング</div>
+<div style="display:flex;background:#eef1f5;border-radius:11px;padding:3px;gap:2px;margin-bottom:14px">
+<span style="flex:1;text-align:center;white-space:nowrap;font-size:12px;padding:7px 0;color:#7a8494">カテゴリ</span>
+<span style="flex:1;text-align:center;white-space:nowrap;font-size:12px;font-weight:700;padding:7px 0;border-radius:9px;background:#fff;color:#1c2430;box-shadow:0 1px 2px rgba(0,0,0,.08)">タグ</span>
+<span style="flex:1;text-align:center;white-space:nowrap;font-size:12px;padding:7px 0;color:#7a8494">なし</span>
+</div>
+<div style="font-size:11px;font-weight:700;color:#9aa4b2;margin-bottom:6px">並び順</div>
+<div style="display:flex;flex-direction:column">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 2px;border-bottom:1px solid #eef1f5;font-size:13.5px;color:#1c2430"><span>作成日時(新しい順)</span><span style="width:18px;height:18px;border-radius:50%;border:1.5px solid #c2cbd8"></span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 2px;border-bottom:1px solid #eef1f5;font-size:13.5px;font-weight:700;color:#1c2430"><span>更新日時(新しい順)</span><span style="width:18px;height:18px;border-radius:50%;border:5.5px solid #2A6FDB"></span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 2px;font-size:13.5px;color:#1c2430"><span>手動(ドラッグで並べ替え)</span><span style="width:18px;height:18px;border-radius:50%;border:1.5px solid #c2cbd8"></span></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ============ 2c タグ設定(追加・編集画面) ============ -->
+<div class="dv-opt" id="2c">
+<div class="dv-olabel"><a class="dv-oid" href="#2c">2c</a>メモ追加・編集画面 — カテゴリ選択+タグ入力(既存タグから選択/新規作成)</div>
+<div class="dv-card" style="padding:24px;background:#e9ecf1">
+<div style="width:320px;background:#F5F7FA;border-radius:24px;border:1px solid #dde2e9;overflow:hidden;display:flex;flex-direction:column;height:720px">
+<div style="display:flex;justify-content:space-between;padding:14px 20px 0;font-size:12px;font-weight:700;color:#1c2430"><span>9:41</span><span>●●●</span></div>
+<div style="padding:14px 20px 12px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;font-weight:700;color:#7a8494">キャンセル</span><span style="font-size:16px;font-weight:900;color:#1c2430">メモを追加</span><span style="font-size:13px;font-weight:900;color:#2A6FDB">保存</span></div>
+<div style="padding:0 16px;display:flex;flex-direction:column;gap:14px">
+<div style="background:#fff;border-radius:14px;border:1.5px solid #2A6FDB;padding:13px 14px"><div style="font-size:15px;color:#1c2430;font-weight:500">代々木「スパイス堂」カレー<span style="display:inline-block;width:2px;height:16px;background:#2A6FDB;vertical-align:-3px;margin-left:1px"></span></div></div>
+<div>
+<div style="font-size:11px;font-weight:700;color:#9aa4b2;margin-bottom:7px">カテゴリ(1つ選択)</div>
+<div style="display:flex;gap:7px;flex-wrap:wrap">
+<span style="white-space:nowrap;font-size:12px;padding:7px 13px;border-radius:999px;background:#fff;border:1px solid #dde2e9;color:#3a4454">買い物</span>
+<span style="white-space:nowrap;font-size:12px;font-weight:700;padding:7px 13px;border-radius:999px;background:#2A6FDB;color:#fff">行きたい店 ✓</span>
+<span style="white-space:nowrap;font-size:12px;padding:7px 13px;border-radius:999px;background:#fff;border:1px solid #dde2e9;color:#3a4454">場所</span>
+<span style="white-space:nowrap;font-size:12px;padding:7px 13px;border-radius:999px;background:#fff;border:1px solid #dde2e9;color:#3a4454">その他</span>
+<span style="white-space:nowrap;font-size:12px;padding:7px 13px;border-radius:999px;border:1.5px dashed #c2cbd8;color:#9aa4b2">＋ 追加</span>
+</div>
+</div>
+<div>
+<div style="font-size:11px;font-weight:700;color:#9aa4b2;margin-bottom:7px">タグ(複数可)</div>
+<div style="background:#fff;border-radius:14px;border:1px solid #e3e8ef;padding:11px 12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+<span style="white-space:nowrap;font-size:11.5px;font-weight:700;color:#2A6FDB;background:#e8f0fd;border-radius:6px;padding:4px 8px">#TVで紹介 ✕</span>
+<span style="white-space:nowrap;font-size:11.5px;font-weight:700;color:#2A6FDB;background:#e8f0fd;border-radius:6px;padding:4px 8px">#カレー ✕</span>
+<span style="font-size:13px;color:#c2cbd8">タグを入力…</span>
+</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+<span style="white-space:nowrap;font-size:11px;color:#7a8494;background:#eef1f5;border-radius:6px;padding:4px 9px">#週末</span>
+<span style="white-space:nowrap;font-size:11px;color:#7a8494;background:#eef1f5;border-radius:6px;padding:4px 9px">#スーパー</span>
+<span style="white-space:nowrap;font-size:11px;color:#7a8494;background:#eef1f5;border-radius:6px;padding:4px 9px">#ドラッグストア</span>
+<span style="white-space:nowrap;font-size:11px;color:#7a8494;background:#eef1f5;border-radius:6px;padding:4px 9px">#雑誌で見た</span>
+</div>
+</div>
+<div>
+<div style="font-size:11px;font-weight:700;color:#9aa4b2;margin-bottom:7px">優先度</div>
+<div style="display:flex;background:#e6eaf0;border-radius:11px;padding:3px;gap:2px;width:180px">
+<span style="flex:1;text-align:center;white-space:nowrap;font-size:12px;font-weight:700;padding:7px 0;border-radius:9px;background:#fff;color:#1c2430;box-shadow:0 1px 2px rgba(0,0,0,.08)">ふつう</span>
+<span style="flex:1;text-align:center;white-space:nowrap;font-size:12px;padding:7px 0;color:#7a8494">高</span>
+</div>
+</div>
+<div>
+<div style="font-size:11px;font-weight:700;color:#9aa4b2;margin-bottom:7px">補足メモ(任意)</div>
+<div style="background:#fff;border-radius:14px;border:1px solid #e3e8ef;padding:12px 14px;font-size:13px;color:#c2cbd8;min-height:56px">出典やURL、営業時間など…</div>
+</div>
+<div style="font-size:11px;color:#9aa4b2">作成 2026/07/05 10:24 · 更新 —</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">次はこんな指示ができます: 「<a class="dv-oid" href="#2a">2a</a>と<a class="dv-oid" href="#2b">2b</a>を組み合わせて」 · 「<a class="dv-oid" href="#1b">1b</a>/<a class="dv-oid" href="#1c">1c</a>のスタイルでも見たい」 · 「触れるプロトタイプに」</p>
+</section>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">life-supporter — ホーム / メモ / 単価計算 の3方向</span></div>
+<div style="max-width:1180px;margin:0 0 24px;font:13px/1.8 'Noto Sans JP',sans-serif;color:#3a3a3a;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:8px;padding:18px 22px">
+<div style="font-weight:700;margin-bottom:6px">前提と設計方針</div>
+<div>スマホ専用(390px想定)・日本語UI・シンプル実用重視。ホーム画面から各機能へ遷移する構成で、将来機能の追加枠をホームに確保。メモは「買い物リスト・行きたい店・場所」を一元管理(カテゴリ+チェック+並べ替え)。単価計算は複数商品の比較・最安判定・履歴保存。3案は情報設計はほぼ共通で、トーンと画面の組み立て方を変えています。</div>
+</div>
+<div class="dv-opts">
+
+<!-- ============ 1a クリーン・カード ============ -->
+<div class="dv-opt" id="1a">
+<div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>クリーン・カード — 白基調+ブルー、カード積み上げの定番構成</div>
+<div class="dv-card" style="padding:24px;background:#e9ecf1">
+<div style="display:flex;gap:20px">
+
+<!-- 1a HOME -->
+<div style="width:320px;flex:none;background:#F5F7FA;border-radius:24px;border:1px solid #dde2e9;overflow:hidden;display:flex;flex-direction:column;height:660px">
+<div style="display:flex;justify-content:space-between;padding:14px 20px 0;font-size:12px;font-weight:700;color:#1c2430"><span>9:41</span><span>●●●</span></div>
+<div style="padding:18px 20px 8px;display:flex;align-items:center;justify-content:space-between">
+<div><div style="font-size:11px;font-weight:700;letter-spacing:.12em;color:#2A6FDB">LIFE-SUPPORTER</div><div style="font-size:21px;font-weight:900;color:#1c2430;margin-top:2px">こんにちは</div><div style="font-size:12px;color:#7a8494;margin-top:2px">7月5日(日)</div></div>
+<div style="width:36px;height:36px;border-radius:50%;background:#fff;border:1px solid #dde2e9;display:grid;place-items:center;color:#7a8494;font-size:15px">⚙</div>
+</div>
+<div style="padding:10px 16px;display:flex;flex-direction:column;gap:12px">
+<div style="background:#fff;border-radius:16px;border:1px solid #e3e8ef;padding:16px;box-shadow:0 1px 2px rgba(28,36,48,.05)">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:8px;background:#e8f0fd;color:#2A6FDB;display:grid;place-items:center;font-size:14px;font-weight:900">✓</div><span style="font-size:15px;font-weight:700;color:#1c2430">メモ</span></div><span style="font-size:12px;color:#2A6FDB;font-weight:700">12件 →</span></div>
+<div style="display:flex;flex-direction:column;gap:7px;font-size:13px;color:#3a4454">
+<div style="display:flex;gap:8px;align-items:center"><span style="width:15px;height:15px;border:1.5px solid #c2cbd8;border-radius:4px;flex:none"></span>牛乳・卵・食パンを買う</div>
+<div style="display:flex;gap:8px;align-items:center"><span style="width:15px;height:15px;border:1.5px solid #c2cbd8;border-radius:4px;flex:none"></span>代々木のカレー店(TVで紹介)</div>
+<div style="display:flex;gap:8px;align-items:center;color:#9aa4b2"><span style="width:15px;height:15px;border-radius:4px;background:#2A6FDB;color:#fff;display:grid;place-items:center;font-size:10px;flex:none">✓</span><span style="text-decoration:line-through">クリーニング受け取り</span></div>
+</div>
+</div>
+<div style="background:#fff;border-radius:16px;border:1px solid #e3e8ef;padding:16px;box-shadow:0 1px 2px rgba(28,36,48,.05)">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:8px;background:#e8f0fd;color:#2A6FDB;display:grid;place-items:center;font-size:14px;font-weight:900">¥</div><span style="font-size:15px;font-weight:700;color:#1c2430">単価計算</span></div><span style="font-size:12px;color:#2A6FDB;font-weight:700">開く →</span></div>
+<div style="font-size:12px;color:#7a8494">前回の比較</div>
+<div style="font-size:13px;color:#3a4454;margin-top:3px">洗剤つめかえ 720g <b style="color:#1F8A5B">が 7% お得</b>でした</div>
+</div>
+<div style="border:1.5px dashed #c2cbd8;border-radius:16px;padding:14px 16px;color:#9aa4b2;font-size:13px;text-align:center">＋ 今後の機能(家計簿・リマインダーなど)</div>
+</div>
+</div>
+
+<!-- 1a MEMO -->
+<div style="width:320px;flex:none;background:#F5F7FA;border-radius:24px;border:1px solid #dde2e9;overflow:hidden;display:flex;flex-direction:column;height:660px;position:relative">
+<div style="display:flex;justify-content:space-between;padding:14px 20px 0;font-size:12px;font-weight:700;color:#1c2430"><span>9:41</span><span>●●●</span></div>
+<div style="padding:14px 20px 10px;display:flex;align-items:center;gap:12px"><span style="font-size:18px;color:#7a8494">‹</span><span style="font-size:19px;font-weight:900;color:#1c2430">メモ</span><span style="margin-left:auto;color:#7a8494;font-size:15px">🔍</span></div>
+<div style="display:flex;gap:8px;padding:2px 16px 12px;overflow:hidden">
+<span style="flex:none;white-space:nowrap;font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px;background:#2A6FDB;color:#fff">すべて 12</span>
+<span style="flex:none;white-space:nowrap;font-size:12px;padding:6px 12px;border-radius:999px;background:#fff;border:1px solid #dde2e9;color:#3a4454">買い物 5</span>
+<span style="flex:none;white-space:nowrap;font-size:12px;padding:6px 12px;border-radius:999px;background:#fff;border:1px solid #dde2e9;color:#3a4454">行きたい店 4</span>
+<span style="flex:none;white-space:nowrap;font-size:12px;padding:6px 12px;border-radius:999px;background:#fff;border:1px solid #dde2e9;color:#3a4454">場所</span>
+</div>
+<div style="padding:0 16px;display:flex;flex-direction:column;gap:8px">
+<div style="background:#fff;border-radius:14px;border:1px solid #e3e8ef;padding:13px 14px;display:flex;gap:10px;align-items:flex-start"><span style="width:18px;height:18px;border:1.5px solid #c2cbd8;border-radius:5px;flex:none;margin-top:1px"></span><div style="flex:1"><div style="font-size:14px;color:#1c2430;font-weight:500">牛乳・卵・食パンを買う</div><div style="font-size:11px;color:#9aa4b2;margin-top:3px"><span style="background:#e8f0fd;color:#2A6FDB;padding:1px 7px;border-radius:999px;font-weight:700">買い物</span> 今日</div></div><span style="color:#c2cbd8">⠿</span></div>
+<div style="background:#fff;border-radius:14px;border:1px solid #e3e8ef;padding:13px 14px;display:flex;gap:10px;align-items:flex-start"><span style="width:18px;height:18px;border:1.5px solid #c2cbd8;border-radius:5px;flex:none;margin-top:1px"></span><div style="flex:1"><div style="font-size:14px;color:#1c2430;font-weight:500">代々木「スパイス堂」カレー<span style="font-size:10px;background:#fdece8;color:#d9573f;padding:1px 6px;border-radius:4px;margin-left:6px;font-weight:700">高</span></div><div style="font-size:11px;color:#9aa4b2;margin-top:3px"><span style="background:#fef3e2;color:#b0731d;padding:1px 7px;border-radius:999px;font-weight:700">行きたい店</span> TVで紹介・7/2追加</div></div><span style="color:#c2cbd8">⠿</span></div>
+<div style="background:#fff;border-radius:14px;border:1px solid #e3e8ef;padding:13px 14px;display:flex;gap:10px;align-items:flex-start"><span style="width:18px;height:18px;border:1.5px solid #c2cbd8;border-radius:5px;flex:none;margin-top:1px"></span><div style="flex:1"><div style="font-size:14px;color:#1c2430;font-weight:500">洗剤の詰め替え(特売チェック)</div><div style="font-size:11px;color:#9aa4b2;margin-top:3px"><span style="background:#e8f0fd;color:#2A6FDB;padding:1px 7px;border-radius:999px;font-weight:700">買い物</span></div></div><span style="color:#c2cbd8">⠿</span></div>
+<div style="background:#fff;border-radius:14px;border:1px solid #e3e8ef;padding:13px 14px;display:flex;gap:10px;align-items:flex-start"><span style="width:18px;height:18px;border:1.5px solid #c2cbd8;border-radius:5px;flex:none;margin-top:1px"></span><div style="flex:1"><div style="font-size:14px;color:#1c2430;font-weight:500">奥多摩の日帰り温泉</div><div style="font-size:11px;color:#9aa4b2;margin-top:3px"><span style="background:#e9f7ef;color:#1F8A5B;padding:1px 7px;border-radius:999px;font-weight:700">場所</span> 雑誌で見た</div></div><span style="color:#c2cbd8">⠿</span></div>
+<div style="background:#fff;border-radius:14px;border:1px solid #e3e8ef;padding:13px 14px;display:flex;gap:10px;align-items:flex-start;opacity:.55"><span style="width:18px;height:18px;border-radius:5px;background:#2A6FDB;color:#fff;display:grid;place-items:center;font-size:11px;flex:none;margin-top:1px">✓</span><div style="flex:1"><div style="font-size:14px;color:#1c2430;text-decoration:line-through">クリーニング受け取り</div><div style="font-size:11px;color:#9aa4b2;margin-top:3px">完了 7/4</div></div></div>
+</div>
+<div style="position:absolute;right:18px;bottom:18px;width:56px;height:56px;border-radius:50%;background:#2A6FDB;color:#fff;display:grid;place-items:center;font-size:26px;font-weight:400;box-shadow:0 6px 16px rgba(42,111,219,.4)">＋</div>
+</div>
+
+<!-- 1a CALC -->
+<div style="width:320px;flex:none;background:#F5F7FA;border-radius:24px;border:1px solid #dde2e9;overflow:hidden;display:flex;flex-direction:column;height:660px">
+<div style="display:flex;justify-content:space-between;padding:14px 20px 0;font-size:12px;font-weight:700;color:#1c2430"><span>9:41</span><span>●●●</span></div>
+<div style="padding:14px 20px 10px;display:flex;align-items:center;gap:12px"><span style="font-size:18px;color:#7a8494">‹</span><span style="font-size:19px;font-weight:900;color:#1c2430">単価計算</span><span style="margin-left:auto;color:#7a8494;font-size:13px;font-weight:700">履歴</span></div>
+<div style="margin:0 16px 12px;background:#e6eaf0;border-radius:12px;padding:3px;display:flex;gap:3px">
+<span style="flex:1;text-align:center;font-size:12.5px;font-weight:700;padding:7px 0;background:#fff;border-radius:10px;color:#1c2430;box-shadow:0 1px 2px rgba(0,0,0,.08)">100gあたり</span>
+<span style="flex:1;text-align:center;font-size:12.5px;padding:7px 0;color:#7a8494">1個あたり</span>
+<span style="flex:1;text-align:center;font-size:12.5px;padding:7px 0;color:#7a8494">100mlあたり</span>
+</div>
+<div style="padding:0 16px;display:flex;flex-direction:column;gap:10px">
+<div style="background:#fff;border-radius:14px;border:1px solid #e3e8ef;padding:14px">
+<div style="display:flex;justify-content:space-between;margin-bottom:9px"><span style="font-size:13px;font-weight:700;color:#1c2430">商品 A</span><span style="font-size:11px;color:#c2cbd8">✕</span></div>
+<div style="display:flex;gap:8px">
+<div style="flex:1"><div style="font-size:10.5px;color:#9aa4b2;margin-bottom:3px">価格(円)</div><div style="border:1.5px solid #dde2e9;border-radius:9px;padding:9px 10px;font-size:16px;font-weight:700;color:#1c2430;background:#fbfcfe">298</div></div>
+<div style="flex:1"><div style="font-size:10.5px;color:#9aa4b2;margin-bottom:3px">内容量(g)</div><div style="border:1.5px solid #dde2e9;border-radius:9px;padding:9px 10px;font-size:16px;font-weight:700;color:#1c2430;background:#fbfcfe">400</div></div>
+</div>
+<div style="margin-top:9px;font-size:12px;color:#7a8494">単価 <b style="font-size:15px;color:#1c2430">¥74.5</b> /100g</div>
+</div>
+<div style="background:#fff;border-radius:14px;border:2px solid #1F8A5B;padding:14px;position:relative">
+<span style="position:absolute;top:-9px;right:12px;background:#1F8A5B;color:#fff;font-size:10px;font-weight:900;padding:2px 9px;border-radius:999px">最安 🏆</span>
+<div style="display:flex;justify-content:space-between;margin-bottom:9px"><span style="font-size:13px;font-weight:700;color:#1c2430">商品 B</span><span style="font-size:11px;color:#c2cbd8">✕</span></div>
+<div style="display:flex;gap:8px">
+<div style="flex:1"><div style="font-size:10.5px;color:#9aa4b2;margin-bottom:3px">価格(円)</div><div style="border:1.5px solid #dde2e9;border-radius:9px;padding:9px 10px;font-size:16px;font-weight:700;color:#1c2430;background:#fbfcfe">498</div></div>
+<div style="flex:1"><div style="font-size:10.5px;color:#9aa4b2;margin-bottom:3px">内容量(g)</div><div style="border:1.5px solid #dde2e9;border-radius:9px;padding:9px 10px;font-size:16px;font-weight:700;color:#1c2430;background:#fbfcfe">720</div></div>
+</div>
+<div style="margin-top:9px;font-size:12px;color:#7a8494">単価 <b style="font-size:15px;color:#1F8A5B">¥69.2</b> /100g</div>
+</div>
+<div style="border:1.5px dashed #c2cbd8;border-radius:12px;padding:10px;text-align:center;font-size:13px;color:#7a8494;font-weight:700">＋ 商品を追加</div>
+<div style="background:#e9f7ef;border-radius:14px;padding:13px 16px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">💡</span><div><div style="font-size:14px;font-weight:900;color:#146c46">商品Bが 7% お得</div><div style="font-size:11px;color:#3f7d61">100gあたり ¥5.3 の差</div></div></div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px"><span style="font-size:12px;font-weight:700;color:#7a8494">最近の履歴</span><span style="font-size:11px;color:#2A6FDB;font-weight:700">すべて見る →</span></div>
+<div style="background:#fff;border-radius:12px;border:1px solid #e3e8ef;padding:11px 14px;display:flex;justify-content:space-between;font-size:12px;color:#3a4454"><span>トイレットペーパー 2商品</span><span style="color:#9aa4b2">7/3</span></div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+<!-- ============ 1b 数字が主役 ============ -->
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>数字が主役 — 白×濃緑、罫線とタブラー数字で道具らしく</div>
+<div class="dv-card" style="padding:24px;background:#eceeeb">
+<div style="display:flex;gap:20px">
+
+<!-- 1b HOME -->
+<div style="width:320px;flex:none;background:#fff;border-radius:24px;border:1px solid #d9ddd6;overflow:hidden;display:flex;flex-direction:column;height:660px">
+<div style="display:flex;justify-content:space-between;padding:14px 20px 0;font-size:12px;font-weight:700;color:#14181a"><span>9:41</span><span>●●●</span></div>
+<div style="padding:22px 20px 16px;border-bottom:1px solid #e7eae5">
+<div style="font-size:24px;font-weight:900;color:#14181a;letter-spacing:-.01em">life-supporter</div>
+<div style="font-size:12px;color:#6b736c;margin-top:4px;font-variant-numeric:tabular-nums">2026.07.05 SUN</div>
+</div>
+<div style="display:flex;border-bottom:1px solid #e7eae5">
+<div style="flex:1;padding:14px 20px;border-right:1px solid #e7eae5"><div style="font-size:26px;font-weight:900;color:#17845C;font-variant-numeric:tabular-nums">12</div><div style="font-size:11px;color:#6b736c;font-weight:700">未完了メモ</div></div>
+<div style="flex:1;padding:14px 20px"><div style="font-size:26px;font-weight:900;color:#14181a;font-variant-numeric:tabular-nums">8</div><div style="font-size:11px;color:#6b736c;font-weight:700">比較履歴</div></div>
+</div>
+<div style="display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:14px;padding:20px;border-bottom:1px solid #e7eae5"><div style="width:42px;height:42px;border-radius:8px;background:#14181a;color:#fff;display:grid;place-items:center;font-size:18px;font-weight:900">✓</div><div style="flex:1"><div style="font-size:16px;font-weight:900;color:#14181a">メモ</div><div style="font-size:11.5px;color:#6b736c;margin-top:1px">買い物・行きたい店・場所を一元管理</div></div><span style="color:#b9c0ba;font-size:18px">›</span></div>
+<div style="display:flex;align-items:center;gap:14px;padding:20px;border-bottom:1px solid #e7eae5"><div style="width:42px;height:42px;border-radius:8px;background:#17845C;color:#fff;display:grid;place-items:center;font-size:18px;font-weight:900">¥</div><div style="flex:1"><div style="font-size:16px;font-weight:900;color:#14181a">単価計算</div><div style="font-size:11.5px;color:#6b736c;margin-top:1px">店頭でどちらが安いか即判定</div></div><span style="color:#b9c0ba;font-size:18px">›</span></div>
+<div style="display:flex;align-items:center;gap:14px;padding:20px;opacity:.45"><div style="width:42px;height:42px;border-radius:8px;border:1.5px dashed #b9c0ba;display:grid;place-items:center;font-size:18px;color:#b9c0ba">＋</div><div style="flex:1"><div style="font-size:16px;font-weight:900;color:#14181a">Coming soon</div><div style="font-size:11.5px;color:#6b736c;margin-top:1px">家計簿 / リマインダー / ポイント管理</div></div></div>
+</div>
+<div style="margin-top:auto;padding:16px 20px;border-top:1px solid #e7eae5;font-size:11px;color:#9aa39b;display:flex;justify-content:space-between"><span>v1.0 · PWA</span><span>⚙ 設定</span></div>
+</div>
+
+<!-- 1b MEMO -->
+<div style="width:320px;flex:none;background:#fff;border-radius:24px;border:1px solid #d9ddd6;overflow:hidden;display:flex;flex-direction:column;height:660px;position:relative">
+<div style="display:flex;justify-content:space-between;padding:14px 20px 0;font-size:12px;font-weight:700;color:#14181a"><span>9:41</span><span>●●●</span></div>
+<div style="padding:16px 20px 0;display:flex;align-items:baseline;gap:10px"><span style="font-size:16px;color:#6b736c">‹</span><span style="font-size:22px;font-weight:900;color:#14181a">メモ</span><span style="font-size:13px;color:#6b736c;font-variant-numeric:tabular-nums">12件</span></div>
+<div style="display:flex;gap:18px;padding:12px 20px 0;border-bottom:1px solid #e7eae5;font-size:13px;font-weight:700">
+<span style="color:#14181a;border-bottom:2.5px solid #17845C;padding-bottom:9px">すべて</span>
+<span style="color:#9aa39b;padding-bottom:9px">買い物</span>
+<span style="color:#9aa39b;padding-bottom:9px">行きたい店</span>
+<span style="color:#9aa39b;padding-bottom:9px">場所</span>
+</div>
+<div style="display:flex;flex-direction:column">
+<div style="display:flex;gap:12px;padding:14px 20px;border-bottom:1px solid #f0f2ef;align-items:flex-start"><span style="width:3px;align-self:stretch;background:#17845C;border-radius:2px;flex:none"></span><span style="width:18px;height:18px;border:1.5px solid #b9c0ba;border-radius:4px;flex:none;margin-top:1px"></span><div style="flex:1"><div style="font-size:14px;font-weight:500;color:#14181a">牛乳・卵・食パンを買う</div><div style="font-size:11px;color:#9aa39b;margin-top:2px;font-variant-numeric:tabular-nums">買い物 · 今日</div></div><span style="font-size:10px;font-weight:900;color:#fff;background:#d9573f;padding:2px 6px;border-radius:3px;margin-top:2px">高</span></div>
+<div style="display:flex;gap:12px;padding:14px 20px;border-bottom:1px solid #f0f2ef;align-items:flex-start"><span style="width:3px;align-self:stretch;background:#d99a17;border-radius:2px;flex:none"></span><span style="width:18px;height:18px;border:1.5px solid #b9c0ba;border-radius:4px;flex:none;margin-top:1px"></span><div style="flex:1"><div style="font-size:14px;font-weight:500;color:#14181a">代々木「スパイス堂」カレー</div><div style="font-size:11px;color:#9aa39b;margin-top:2px">行きたい店 · TVで紹介 · 07.02</div></div></div>
+<div style="display:flex;gap:12px;padding:14px 20px;border-bottom:1px solid #f0f2ef;align-items:flex-start"><span style="width:3px;align-self:stretch;background:#17845C;border-radius:2px;flex:none"></span><span style="width:18px;height:18px;border:1.5px solid #b9c0ba;border-radius:4px;flex:none;margin-top:1px"></span><div style="flex:1"><div style="font-size:14px;font-weight:500;color:#14181a">洗剤の詰め替え(特売チェック)</div><div style="font-size:11px;color:#9aa39b;margin-top:2px">買い物</div></div></div>
+<div style="display:flex;gap:12px;padding:14px 20px;border-bottom:1px solid #f0f2ef;align-items:flex-start"><span style="width:3px;align-self:stretch;background:#2a78d6;border-radius:2px;flex:none"></span><span style="width:18px;height:18px;border:1.5px solid #b9c0ba;border-radius:4px;flex:none;margin-top:1px"></span><div style="flex:1"><div style="font-size:14px;font-weight:500;color:#14181a">奥多摩の日帰り温泉</div><div style="font-size:11px;color:#9aa39b;margin-top:2px">場所 · 雑誌で見た</div></div></div>
+<div style="display:flex;gap:12px;padding:14px 20px;border-bottom:1px solid #f0f2ef;align-items:flex-start;opacity:.5"><span style="width:3px;align-self:stretch;background:#b9c0ba;border-radius:2px;flex:none"></span><span style="width:18px;height:18px;border-radius:4px;background:#14181a;color:#fff;display:grid;place-items:center;font-size:11px;flex:none;margin-top:1px">✓</span><div style="flex:1"><div style="font-size:14px;color:#14181a;text-decoration:line-through">クリーニング受け取り</div><div style="font-size:11px;color:#9aa39b;margin-top:2px">完了 · 07.04</div></div></div>
+</div>
+<div style="margin-top:auto;padding:14px 16px;border-top:1px solid #e7eae5;display:flex;gap:10px;align-items:center">
+<div style="flex:1;border:1.5px solid #d9ddd6;border-radius:10px;padding:11px 14px;font-size:13px;color:#9aa39b">メモを追加…</div>
+<div style="width:44px;height:44px;border-radius:10px;background:#17845C;color:#fff;display:grid;place-items:center;font-size:22px;flex:none">＋</div>
+</div>
+</div>
+
+<!-- 1b CALC -->
+<div style="width:320px;flex:none;background:#fff;border-radius:24px;border:1px solid #d9ddd6;overflow:hidden;display:flex;flex-direction:column;height:660px">
+<div style="display:flex;justify-content:space-between;padding:14px 20px 0;font-size:12px;font-weight:700;color:#14181a"><span>9:41</span><span>●●●</span></div>
+<div style="padding:16px 20px 12px;display:flex;align-items:baseline;gap:10px;border-bottom:1px solid #e7eae5"><span style="font-size:16px;color:#6b736c">‹</span><span style="font-size:22px;font-weight:900;color:#14181a">単価計算</span><span style="margin-left:auto;font-size:12px;font-weight:700;color:#17845C">履歴 8</span></div>
+<div style="background:#14181a;color:#fff;padding:18px 20px">
+<div style="font-size:11px;color:#9aa39b;font-weight:700;letter-spacing:.08em">判定結果 — 100gあたり</div>
+<div style="display:flex;align-items:baseline;gap:8px;margin-top:6px"><span style="font-size:34px;font-weight:900;color:#4fd398;font-variant-numeric:tabular-nums">¥69.2</span><span style="font-size:13px;color:#c9cfc9">商品B が最安</span></div>
+<div style="margin-top:12px;display:flex;flex-direction:column;gap:7px">
+<div style="display:flex;align-items:center;gap:8px;font-size:11px;font-variant-numeric:tabular-nums"><span style="width:14px;color:#9aa39b">A</span><div style="flex:1;height:10px;background:#2a3134;border-radius:3px;overflow:hidden"><div style="width:100%;height:100%;background:#5a6663"></div></div><span style="width:38px;text-align:right;color:#c9cfc9">74.5</span></div>
+<div style="display:flex;align-items:center;gap:8px;font-size:11px;font-variant-numeric:tabular-nums"><span style="width:14px;color:#4fd398;font-weight:900">B</span><div style="flex:1;height:10px;background:#2a3134;border-radius:3px;overflow:hidden"><div style="width:93%;height:100%;background:#4fd398"></div></div><span style="width:38px;text-align:right;color:#4fd398;font-weight:900">69.2</span></div>
+</div>
+<div style="margin-top:10px;font-size:11px;color:#9aa39b">差額 ¥5.3/100g · Bが7%お得</div>
+</div>
+<div style="display:flex;border-bottom:1px solid #e7eae5;font-size:12px;font-weight:700;text-align:center">
+<span style="flex:1;padding:10px 0;color:#14181a;border-bottom:2.5px solid #17845C">100g</span>
+<span style="flex:1;padding:10px 0;color:#9aa39b">100ml</span>
+<span style="flex:1;padding:10px 0;color:#9aa39b">1個</span>
+<span style="flex:1;padding:10px 0;color:#9aa39b">1枚</span>
+</div>
+<div style="display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:10px;padding:13px 20px;border-bottom:1px solid #f0f2ef"><span style="width:22px;height:22px;border-radius:6px;background:#e7eae5;color:#14181a;display:grid;place-items:center;font-size:11px;font-weight:900;flex:none">A</span><div style="flex:1;display:flex;gap:8px"><div style="flex:1;border:1.5px solid #d9ddd6;border-radius:8px;padding:8px 10px;font-size:15px;font-weight:700;color:#14181a;font-variant-numeric:tabular-nums">298<span style="font-size:10px;color:#9aa39b;font-weight:400"> 円</span></div><div style="flex:1;border:1.5px solid #d9ddd6;border-radius:8px;padding:8px 10px;font-size:15px;font-weight:700;color:#14181a;font-variant-numeric:tabular-nums">400<span style="font-size:10px;color:#9aa39b;font-weight:400"> g</span></div></div></div>
+<div style="display:flex;align-items:center;gap:10px;padding:13px 20px;border-bottom:1px solid #f0f2ef;background:#f2faf6"><span style="width:22px;height:22px;border-radius:6px;background:#17845C;color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex:none">B</span><div style="flex:1;display:flex;gap:8px"><div style="flex:1;border:1.5px solid #17845C;border-radius:8px;padding:8px 10px;font-size:15px;font-weight:700;color:#14181a;font-variant-numeric:tabular-nums">498<span style="font-size:10px;color:#9aa39b;font-weight:400"> 円</span></div><div style="flex:1;border:1.5px solid #17845C;border-radius:8px;padding:8px 10px;font-size:15px;font-weight:700;color:#14181a;font-variant-numeric:tabular-nums">720<span style="font-size:10px;color:#9aa39b;font-weight:400"> g</span></div></div></div>
+<div style="padding:12px 20px;font-size:13px;font-weight:700;color:#17845C">＋ 商品Cを追加</div>
+</div>
+<div style="margin-top:auto;padding:12px 20px;border-top:1px solid #e7eae5;display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;color:#9aa39b">07.03 トイレットペーパー ほか</span><span style="font-size:12px;font-weight:900;color:#14181a;border:1.5px solid #14181a;border-radius:8px;padding:7px 14px">保存する</span></div>
+</div>
+
+</div>
+</div>
+</div>
+
+<!-- ============ 1c やわらか実用 ============ -->
+<div class="dv-opt" id="1c">
+<div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>やわらか実用 — 生成り×テラコッタ、丸ゴシックで親しみやすく</div>
+<div class="dv-card" style="padding:24px;background:#efe9df">
+<div style="display:flex;gap:20px;font-family:'Zen Maru Gothic','Noto Sans JP',sans-serif">
+
+<!-- 1c HOME -->
+<div style="width:320px;flex:none;background:#FAF6F0;border-radius:28px;border:1px solid #e6ddd0;overflow:hidden;display:flex;flex-direction:column;height:660px">
+<div style="display:flex;justify-content:space-between;padding:14px 22px 0;font-size:12px;font-weight:700;color:#4a4238"><span>9:41</span><span>●●●</span></div>
+<div style="padding:20px 22px 6px">
+<div style="font-size:13px;font-weight:700;color:#D97757">life-supporter</div>
+<div style="font-size:22px;font-weight:900;color:#4a4238;margin-top:3px">今日も、おつかれさま</div>
+<div style="font-size:12px;color:#a3968a;margin-top:3px">7月5日(日)</div>
+</div>
+<div style="padding:14px 18px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div style="grid-column:1/3;background:#fff;border-radius:22px;padding:18px;box-shadow:0 2px 6px rgba(74,66,56,.06)">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:16px;font-weight:900;color:#4a4238;white-space:nowrap">📝 メモ</span><span style="font-size:12px;font-weight:700;color:#D97757">12件 →</span></div>
+<div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;font-size:13px;color:#5f564a">
+<div style="display:flex;gap:8px;align-items:center"><span style="width:16px;height:16px;border:2px solid #dfd4c4;border-radius:50%;flex:none"></span>牛乳・卵・食パンを買う</div>
+<div style="display:flex;gap:8px;align-items:center"><span style="width:16px;height:16px;border:2px solid #dfd4c4;border-radius:50%;flex:none"></span>代々木のカレー店(TVで紹介)</div>
+</div>
+</div>
+<div style="background:#fff;border-radius:22px;padding:16px;box-shadow:0 2px 6px rgba(74,66,56,.06)">
+<div style="width:38px;height:38px;border-radius:14px;background:#fdeee6;color:#D97757;display:grid;place-items:center;font-size:17px;font-weight:900">¥</div>
+<div style="font-size:14px;font-weight:900;color:#4a4238;margin-top:10px">単価計算</div>
+<div style="font-size:11px;color:#a3968a;margin-top:2px">お得はどっち?</div>
+</div>
+<div style="background:#fff;border-radius:22px;padding:16px;box-shadow:0 2px 6px rgba(74,66,56,.06);opacity:.5">
+<div style="width:38px;height:38px;border-radius:14px;border:2px dashed #dfd4c4;color:#c5b8a8;display:grid;place-items:center;font-size:17px">＋</div>
+<div style="font-size:14px;font-weight:900;color:#4a4238;margin-top:10px">近日公開</div>
+<div style="font-size:11px;color:#a3968a;margin-top:2px">家計簿など</div>
+</div>
+</div>
+<div style="margin:0 18px;background:#f3ece2;border-radius:18px;padding:13px 16px;font-size:12px;color:#8a7d6e;display:flex;gap:9px;align-items:center"><span>💡</span>前回の比較:洗剤つめかえ720gが 7% お得でした</div>
+<div style="margin-top:auto;padding:14px 22px;text-align:center;font-size:11px;color:#c5b8a8">⚙ 設定 · v1.0</div>
+</div>
+
+<!-- 1c MEMO -->
+<div style="width:320px;flex:none;background:#FAF6F0;border-radius:28px;border:1px solid #e6ddd0;overflow:hidden;display:flex;flex-direction:column;height:660px;position:relative">
+<div style="display:flex;justify-content:space-between;padding:14px 22px 0;font-size:12px;font-weight:700;color:#4a4238"><span>9:41</span><span>●●●</span></div>
+<div style="padding:16px 22px 10px;display:flex;align-items:center;gap:12px"><span style="font-size:18px;color:#a3968a">‹</span><span style="font-size:20px;font-weight:900;color:#4a4238">メモ</span><span style="margin-left:auto;color:#a3968a;font-size:15px">🔍</span></div>
+<div style="padding:0 18px;display:flex;flex-direction:column;gap:14px">
+<div>
+<div style="font-size:12px;font-weight:900;color:#D97757;margin-bottom:7px;display:flex;align-items:center;gap:6px">🛒 買い物 <span style="color:#c5b8a8;font-weight:700">5</span></div>
+<div style="background:#fff;border-radius:18px;box-shadow:0 2px 6px rgba(74,66,56,.06);overflow:hidden">
+<div style="padding:13px 16px;display:flex;gap:10px;align-items:center;border-bottom:1px solid #f3ece2"><span style="width:17px;height:17px;border:2px solid #dfd4c4;border-radius:50%;flex:none"></span><span style="flex:1;font-size:13.5px;color:#4a4238;font-weight:700">牛乳・卵・食パンを買う</span><span style="font-size:10px;font-weight:900;color:#D97757;background:#fdeee6;border-radius:999px;padding:2px 8px">きょう</span></div>
+<div style="padding:13px 16px;display:flex;gap:10px;align-items:center;border-bottom:1px solid #f3ece2"><span style="width:17px;height:17px;border:2px solid #dfd4c4;border-radius:50%;flex:none"></span><span style="flex:1;font-size:13.5px;color:#4a4238;font-weight:700">洗剤の詰め替え(特売チェック)</span></div>
+<div style="padding:13px 16px;display:flex;gap:10px;align-items:center;opacity:.5"><span style="width:17px;height:17px;border-radius:50%;background:#D97757;color:#fff;display:grid;place-items:center;font-size:10px;flex:none">✓</span><span style="flex:1;font-size:13.5px;color:#4a4238;text-decoration:line-through">クリーニング受け取り</span></div>
+</div>
+</div>
+<div>
+<div style="font-size:12px;font-weight:900;color:#b0731d;margin-bottom:7px;display:flex;align-items:center;gap:6px">🍜 行きたい店 <span style="color:#c5b8a8;font-weight:700">4</span></div>
+<div style="background:#fff;border-radius:18px;box-shadow:0 2px 6px rgba(74,66,56,.06);overflow:hidden">
+<div style="padding:13px 16px;display:flex;gap:10px;align-items:center;border-bottom:1px solid #f3ece2"><span style="width:17px;height:17px;border:2px solid #dfd4c4;border-radius:50%;flex:none"></span><div style="flex:1"><div style="font-size:13.5px;color:#4a4238;font-weight:700">代々木「スパイス堂」カレー</div><div style="font-size:10.5px;color:#a3968a;margin-top:1px">TVで紹介 · 7/2</div></div><span style="font-size:12px;color:#c5b8a8">📍</span></div>
+<div style="padding:13px 16px;display:flex;gap:10px;align-items:center"><span style="width:17px;height:17px;border:2px solid #dfd4c4;border-radius:50%;flex:none"></span><span style="flex:1;font-size:13.5px;color:#4a4238;font-weight:700">中目黒のパン屋さん</span></div>
+</div>
+</div>
+<div>
+<div style="font-size:12px;font-weight:900;color:#4d8a5c;margin-bottom:7px;display:flex;align-items:center;gap:6px">🗺 場所 <span style="color:#c5b8a8;font-weight:700">2</span></div>
+<div style="background:#fff;border-radius:18px;box-shadow:0 2px 6px rgba(74,66,56,.06)">
+<div style="padding:13px 16px;display:flex;gap:10px;align-items:center"><span style="width:17px;height:17px;border:2px solid #dfd4c4;border-radius:50%;flex:none"></span><span style="flex:1;font-size:13.5px;color:#4a4238;font-weight:700">奥多摩の日帰り温泉</span></div>
+</div>
+</div>
+</div>
+<div style="position:absolute;left:18px;right:18px;bottom:16px;background:#D97757;color:#fff;border-radius:18px;padding:14px;text-align:center;font-size:14px;font-weight:900;box-shadow:0 6px 16px rgba(217,119,87,.35)">＋ メモを追加</div>
+</div>
+
+<!-- 1c CALC -->
+<div style="width:320px;flex:none;background:#FAF6F0;border-radius:28px;border:1px solid #e6ddd0;overflow:hidden;display:flex;flex-direction:column;height:660px">
+<div style="display:flex;justify-content:space-between;padding:14px 22px 0;font-size:12px;font-weight:700;color:#4a4238"><span>9:41</span><span>●●●</span></div>
+<div style="padding:16px 22px 10px;display:flex;align-items:center;gap:12px"><span style="font-size:18px;color:#a3968a">‹</span><span style="font-size:20px;font-weight:900;color:#4a4238">単価計算</span><span style="margin-left:auto;font-size:12px;font-weight:900;color:#D97757">🕐 履歴</span></div>
+<div style="padding:0 18px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;gap:8px">
+<span style="font-size:12px;font-weight:900;padding:8px 14px;border-radius:999px;background:#4a4238;color:#fff">100gあたり</span>
+<span style="font-size:12px;font-weight:700;padding:8px 14px;border-radius:999px;background:#fff;color:#8a7d6e;border:1px solid #e6ddd0">100ml</span>
+<span style="font-size:12px;font-weight:700;padding:8px 14px;border-radius:999px;background:#fff;color:#8a7d6e;border:1px solid #e6ddd0">1個</span>
+</div>
+<div style="background:#fff;border-radius:22px;padding:16px;box-shadow:0 2px 6px rgba(74,66,56,.06)">
+<div style="font-size:13px;font-weight:900;color:#4a4238;margin-bottom:9px">🅰 いつもの(400g)</div>
+<div style="display:flex;gap:8px">
+<div style="flex:1;background:#faf6f0;border-radius:14px;padding:10px 12px"><div style="font-size:10px;color:#a3968a;font-weight:700">価格</div><div style="font-size:18px;font-weight:900;color:#4a4238">¥298</div></div>
+<div style="flex:1;background:#faf6f0;border-radius:14px;padding:10px 12px"><div style="font-size:10px;color:#a3968a;font-weight:700">内容量</div><div style="font-size:18px;font-weight:900;color:#4a4238">400<span style="font-size:11px;font-weight:700;color:#a3968a">g</span></div></div>
+</div>
+<div style="margin-top:9px;font-size:12px;color:#8a7d6e">→ 100gあたり <b style="color:#4a4238;font-size:14px">¥74.5</b></div>
+</div>
+<div style="background:#fff;border-radius:22px;padding:16px;box-shadow:0 4px 12px rgba(217,119,87,.18);border:2px solid #D97757;position:relative">
+<div style="position:absolute;top:-11px;left:16px;background:#D97757;color:#fff;font-size:11px;font-weight:900;padding:3px 12px;border-radius:999px">🎉 こっちがお得!</div>
+<div style="font-size:13px;font-weight:900;color:#4a4238;margin:6px 0 9px">🅱 大容量(720g)</div>
+<div style="display:flex;gap:8px">
+<div style="flex:1;background:#faf6f0;border-radius:14px;padding:10px 12px"><div style="font-size:10px;color:#a3968a;font-weight:700">価格</div><div style="font-size:18px;font-weight:900;color:#4a4238">¥498</div></div>
+<div style="flex:1;background:#faf6f0;border-radius:14px;padding:10px 12px"><div style="font-size:10px;color:#a3968a;font-weight:700">内容量</div><div style="font-size:18px;font-weight:900;color:#4a4238">720<span style="font-size:11px;font-weight:700;color:#a3968a">g</span></div></div>
+</div>
+<div style="margin-top:9px;font-size:12px;color:#8a7d6e">→ 100gあたり <b style="color:#D97757;font-size:14px">¥69.2</b>(7% お得・差 ¥5.3)</div>
+</div>
+<div style="border:2px dashed #dfd4c4;border-radius:18px;padding:12px;text-align:center;font-size:13px;font-weight:900;color:#a3968a">＋ 商品をくらべる</div>
+<div style="display:flex;gap:10px">
+<div style="flex:1;background:#fff;border:1px solid #e6ddd0;border-radius:16px;padding:12px;text-align:center;font-size:13px;font-weight:900;color:#8a7d6e">クリア</div>
+<div style="flex:1;background:#4a4238;border-radius:16px;padding:12px;text-align:center;font-size:13px;font-weight:900;color:#fff">履歴に保存</div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">次はこんな指示ができます: 「<a class="dv-oid" href="#1a">1a</a>の構成で<a class="dv-oid" href="#1b">1b</a>の結果パネルを使って」 · 「<a class="dv-oid" href="#1b">1b</a>をベースに触れるプロトタイプに」 · 「メモの追加画面・履歴画面も見たい」</p>
+</section>
+</x-dc>
+</body>
+</html>

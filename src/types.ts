@@ -1,0 +1,61 @@
+export type Priority = 'normal' | 'high'
+
+export interface Memo {
+  id: string
+  title: string
+  category: string // "shopping" | "restaurant" | "place" | "other" | custom id
+  tags: string[]
+  priority: Priority
+  note?: string
+  source?: string
+  done: boolean
+  doneAt?: number
+  archived?: boolean
+  createdAt: number
+  updatedAt: number
+  sortOrder: number
+}
+
+// 日ごとに自由記述を書き留めるログの共通形。Good & New と行動記録が同じ形を持つ
+export interface DailyLogEntry {
+  id: string
+  text: string
+  createdAt: number
+  updatedAt: number
+}
+
+export type GoodNew = DailyLogEntry
+export type ActivityLog = DailyLogEntry
+
+export type UnitMode = 'per100g' | 'per100ml' | 'perItem' | 'perSheet'
+
+export interface ComparisonItem {
+  label?: string
+  price: number
+  amount: number
+}
+
+export interface Comparison {
+  id: string
+  name?: string
+  unitMode: UnitMode
+  items: ComparisonItem[]
+  savedAt: number
+}
+
+export interface Category {
+  id: string
+  label: string
+  emoji?: string
+  builtin: boolean
+}
+
+export type GroupBy = 'category' | 'tag' | 'none'
+export type SortBy = 'createdAt' | 'updatedAt' | 'manual'
+export type SortDir = 'desc' | 'asc'
+
+export interface ViewSettings {
+  groupBy: GroupBy
+  sortBy: SortBy
+  sortDir: SortDir
+}
