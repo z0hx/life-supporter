@@ -1,6 +1,6 @@
-import type { ActivityLog, Category, Comparison, GoodNew, Memo } from '../types'
+import type { ActivityLog, Category, Comparison, GoodNew, Memo, PriceRecord, Product } from '../types'
 
-export const SCHEMA_VERSION = 3
+export const SCHEMA_VERSION = 4
 
 export interface BackupFile {
   app: 'life-supporter'
@@ -11,6 +11,8 @@ export interface BackupFile {
   categories: Category[]
   goodNews: GoodNew[]
   activityLogs: ActivityLog[]
+  products: Product[]
+  priceRecords: PriceRecord[]
 }
 
 export function buildBackup(
@@ -18,7 +20,9 @@ export function buildBackup(
   comparisons: Comparison[],
   categories: Category[],
   goodNews: GoodNew[],
-  activityLogs: ActivityLog[]
+  activityLogs: ActivityLog[],
+  products: Product[],
+  priceRecords: PriceRecord[]
 ): BackupFile {
   return {
     app: 'life-supporter',
@@ -28,7 +32,9 @@ export function buildBackup(
     comparisons,
     categories,
     goodNews,
-    activityLogs
+    activityLogs,
+    products,
+    priceRecords
   }
 }
 
@@ -61,9 +67,12 @@ export function validateBackup(text: string): BackupValidation {
   if (!Array.isArray(d.memos) || !Array.isArray(d.comparisons) || !Array.isArray(d.categories)) {
     return { ok: false, error: 'ファイルの内容が不完全です。' }
   }
-  // 旧バックアップに存在しないストアは空配列に正規化(v1: goodNews 無し / v1・v2: activityLogs 無し)
+  // 旧バックアップに存在しないストアは空配列に正規化
+  // (v1: goodNews 無し / v1・v2: activityLogs 無し / v1〜v3: products・priceRecords 無し)
   if (!Array.isArray(d.goodNews)) d.goodNews = []
   if (!Array.isArray(d.activityLogs)) d.activityLogs = []
+  if (!Array.isArray(d.products)) d.products = []
+  if (!Array.isArray(d.priceRecords)) d.priceRecords = []
   return { ok: true, data: d as BackupFile }
 }
 

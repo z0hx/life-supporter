@@ -19,6 +19,16 @@ export function unitModeDef(id: UnitMode) {
   return UNIT_MODES.find((m) => m.id === id) ?? UNIT_MODES[0]
 }
 
+// 全角数字・全角ピリオドにも耐える数値パース
+export function parseNum(s: string): number {
+  const normalized = s
+    .replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+    .replace(/[．]/g, '.')
+    .trim()
+  const v = Number.parseFloat(normalized)
+  return Number.isFinite(v) ? v : NaN
+}
+
 // 単価 = 価格 ÷ 内容量 × 基準量
 export function unitPrice(price: number, amount: number, mode: UnitMode): number | null {
   if (!(price > 0) || !(amount > 0)) return null

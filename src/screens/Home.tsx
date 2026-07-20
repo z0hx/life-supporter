@@ -13,7 +13,7 @@ function greeting() {
 }
 
 export function Home({ navigate }: { navigate: (r: string) => void }) {
-  const { memos, comparisons, goodNews, activityLogs } = useStore()
+  const { memos, comparisons, goodNews, activityLogs, products } = useStore()
   const active = memos.filter((m) => !m.archived && !m.done)
   const recordedToday = goodNews.some((g) => isSameDay(g.createdAt))
   const loggedToday = activityLogs.some((a) => isSameDay(a.createdAt))
@@ -32,6 +32,8 @@ export function Home({ navigate }: { navigate: (r: string) => void }) {
       hint = `前回の比較:${last.name}(${mode.label})`
     }
   }
+
+  const productHint = products.length === 0 ? '店ごとの値段をくらべる' : `${products.length}商品を記録中`
 
   return (
     <div className="screen home-screen">
@@ -92,11 +94,11 @@ export function Home({ navigate }: { navigate: (r: string) => void }) {
           <div className="home-tile-title">単価計算</div>
           <div className="home-tile-sub">お得はどっち?</div>
         </button>
-        <div className="home-card home-card--soon" aria-disabled="true">
-          <div className="home-tile-icon home-tile-icon--dashed">＋</div>
-          <div className="home-tile-title">近日公開</div>
-          <div className="home-tile-sub">家計簿など</div>
-        </div>
+        <button className="home-card" onClick={() => navigate('/products')}>
+          <div className="home-tile-icon">💰</div>
+          <div className="home-tile-title">価格記録</div>
+          <div className="home-tile-sub">{productHint}</div>
+        </button>
       </div>
       {hint && (
         <button className="home-hint" onClick={() => navigate('/history')}>
