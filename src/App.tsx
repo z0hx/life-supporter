@@ -7,6 +7,7 @@ import { Calc, EMPTY_DRAFT, type CalcDraft } from './screens/Calc'
 import { History } from './screens/History'
 import { GoodNew } from './screens/GoodNew'
 import { ActivityLog } from './screens/ActivityLog'
+import { Products } from './screens/Products'
 import { Settings } from './screens/Settings'
 import { usePWAUpdate } from './usePWAUpdate'
 
@@ -39,6 +40,8 @@ function Router() {
         <GoodNew navigate={navigate} />
       ) : route === '/activity' ? (
         <ActivityLog navigate={navigate} />
+      ) : route === '/products' ? (
+        <Products navigate={navigate} />
       ) : route === '/settings' ? (
         <Settings navigate={navigate} />
       ) : (

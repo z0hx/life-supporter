@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { UnitMode } from '../types'
 import { useStore } from '../store'
-import { findCheapest, itemBadge, UNIT_MODES, unitModeDef, unitPrice } from '../lib/calc'
+import { findCheapest, itemBadge, parseNum, UNIT_MODES, unitModeDef, unitPrice } from '../lib/calc'
 import { Dialog } from '../components/Dialog'
 import { useToast } from '../components/Toast'
 
@@ -22,16 +22,6 @@ export const EMPTY_DRAFT: CalcDraft = {
     { label: '', price: '', amount: '' },
     { label: '', price: '', amount: '' }
   ]
-}
-
-function parseNum(s: string): number {
-  // 全角数字・全角ピリオドにも耐える
-  const normalized = s
-    .replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
-    .replace(/[．]/g, '.')
-    .trim()
-  const v = Number.parseFloat(normalized)
-  return Number.isFinite(v) ? v : NaN
 }
 
 export function Calc({

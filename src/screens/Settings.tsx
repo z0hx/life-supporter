@@ -25,7 +25,15 @@ export function Settings({ navigate }: { navigate: (r: string) => void }) {
   const doExport = async () => {
     try {
       const result = await shareOrDownload(
-        buildBackup(store.memos, store.comparisons, store.categories, store.goodNews, store.activityLogs)
+        buildBackup(
+          store.memos,
+          store.comparisons,
+          store.categories,
+          store.goodNews,
+          store.activityLogs,
+          store.products,
+          store.priceRecords
+        )
       )
       await store.markExported()
       toast(result === 'shared' ? '共有シートからバックアップを送信しました' : 'バックアップをダウンロードしました')
@@ -47,12 +55,28 @@ export function Settings({ navigate }: { navigate: (r: string) => void }) {
     const d = pendingImport!
     setPendingImport(null)
     if (mode === 'replace') {
-      await store.importReplace(d.memos, d.comparisons, d.categories, d.goodNews, d.activityLogs)
+      await store.importReplace(
+        d.memos,
+        d.comparisons,
+        d.categories,
+        d.goodNews,
+        d.activityLogs,
+        d.products,
+        d.priceRecords
+      )
     } else {
-      await store.importMerge(d.memos, d.comparisons, d.categories, d.goodNews, d.activityLogs)
+      await store.importMerge(
+        d.memos,
+        d.comparisons,
+        d.categories,
+        d.goodNews,
+        d.activityLogs,
+        d.products,
+        d.priceRecords
+      )
     }
     setImportResult(
-      `インポートが完了しました。\nメモ ${d.memos.length}件 / 比較履歴 ${d.comparisons.length}件 / カテゴリ ${d.categories.length}件 / Good & New ${d.goodNews.length}件 / 行動記録 ${d.activityLogs.length}件`
+      `インポートが完了しました。\nメモ ${d.memos.length}件 / 比較履歴 ${d.comparisons.length}件 / カテゴリ ${d.categories.length}件 / Good & New ${d.goodNews.length}件 / 行動記録 ${d.activityLogs.length}件 / 商品 ${d.products.length}件 / 価格記録 ${d.priceRecords.length}件`
     )
   }
 
@@ -194,7 +218,7 @@ export function Settings({ navigate }: { navigate: (r: string) => void }) {
       {pendingImport && (
         <Dialog
           title="インポート方法を選択"
-          message={`ファイルの内容:メモ ${pendingImport.memos.length}件 / 比較履歴 ${pendingImport.comparisons.length}件 / カテゴリ ${pendingImport.categories.length}件 / Good & New ${pendingImport.goodNews.length}件 / 行動記録 ${pendingImport.activityLogs.length}件`}
+          message={`ファイルの内容:メモ ${pendingImport.memos.length}件 / 比較履歴 ${pendingImport.comparisons.length}件 / カテゴリ ${pendingImport.categories.length}件 / Good & New ${pendingImport.goodNews.length}件 / 行動記録 ${pendingImport.activityLogs.length}件 / 商品 ${pendingImport.products.length}件 / 価格記録 ${pendingImport.priceRecords.length}件`}
           onClose={() => setPendingImport(null)}
           actions={[
             { label: '置き換え(今のデータを消して復元)', style: 'dark', onClick: () => applyImport('replace') },
@@ -216,7 +240,7 @@ export function Settings({ navigate }: { navigate: (r: string) => void }) {
       {confirmErase && (
         <Dialog
           title="すべてのデータを削除"
-          message="メモ・比較履歴・カテゴリ・Good & New・行動記録 をすべて削除します。この操作は取り消せません。"
+          message="メモ・比較履歴・カテゴリ・Good & New・行動記録・商品と価格記録 をすべて削除します。この操作は取り消せません。"
           onClose={() => setConfirmErase(false)}
           actions={[
             {

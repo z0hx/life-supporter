@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode
 } from 'react'
-import type { ActivityLog, Category, Comparison, GoodNew, Memo } from './types'
+import type { ActivityLog, Category, Comparison, GoodNew, Memo, PriceRecord, Product } from './types'
 import * as db from './lib/db'
 import { uid } from './lib/format'
 
@@ -28,6 +28,8 @@ interface Store {
   categories: Category[]
   goodNews: GoodNew[]
   activityLogs: ActivityLog[]
+  products: Product[]
+  priceRecords: PriceRecord[]
   archiveDays: number // 0 = 自動アーカイブしない
   lastExportAt: number | null
   addMemo: (input: MemoInput) => Promise<Memo>
@@ -45,11 +47,47 @@ interface Store {
   addActivityLog: (text: string) => Promise<ActivityLog>
   updateActivityLog: (id: string, text: string) => Promise<void>
   removeActivityLog: (id: string) => Promise<void>
+  addProduct: (input: ProductInput) => Promise<Product>
+  updateProduct: (id: string, patch: Partial<ProductInput>) => Promise<void>
+  removeProduct: (id: string) => Promise<void>
+  addPriceRecord: (productId: string, input: PriceRecordInput) => Promise<PriceRecord>
+  updatePriceRecord: (id: string, patch: Partial<PriceRecordInput>) => Promise<void>
+  removePriceRecord: (id: string) => Promise<void>
   setArchiveDays: (days: number) => Promise<void>
   markExported: () => Promise<void>
-  importReplace: (memos: Memo[], comparisons: Comparison[], categories: Category[], goodNews: GoodNew[], activityLogs: ActivityLog[]) => Promise<void>
-  importMerge: (memos: Memo[], comparisons: Comparison[], categories: Category[], goodNews: GoodNew[], activityLogs: ActivityLog[]) => Promise<void>
+  importReplace: (
+    memos: Memo[],
+    comparisons: Comparison[],
+    categories: Category[],
+    goodNews: GoodNew[],
+    activityLogs: ActivityLog[],
+    products: Product[],
+    priceRecords: PriceRecord[]
+  ) => Promise<void>
+  importMerge: (
+    memos: Memo[],
+    comparisons: Comparison[],
+    categories: Category[],
+    goodNews: GoodNew[],
+    activityLogs: ActivityLog[],
+    products: Product[],
+    priceRecords: PriceRecord[]
+  ) => Promise<void>
   eraseAll: () => Promise<void>
+}
+
+export interface ProductInput {
+  name: string
+  unitMode: Product['unitMode']
+  memo?: string
+}
+
+export interface PriceRecordInput {
+  store: string
+  price: number
+  amount: number
+  boughtAt: number
+  memo?: string
 }
 
 export interface MemoInput {
@@ -70,6 +108,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES)
   const [goodNews, setGoodNews] = useState<GoodNew[]>([])
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([])
+  const [products, setProducts] = useState<Product[]>([])
+  const [priceRecords, setPriceRecords] = useState<PriceRecord[]>([])
   const [archiveDays, setArchiveDaysState] = useState(DEFAULT_ARCHIVE_DAYS)
   const [lastExportAt, setLastExportAt] = useState<number | null>(null)
 
@@ -105,6 +145,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const comps = await db.getAllComparisons()
       const gn = await db.getAllGoodNews()
       const al = await db.getAllActivityLogs()
+      const prods = await db.getAllProducts()
+      const recs = await db.getAllPriceRecords()
       if (cancelled) return
       setCategories(sortCategories(cats))
       setArchiveDaysState(days)
@@ -113,6 +155,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setComparisons(comps.sort((a, b) => b.savedAt - a.savedAt))
       setGoodNews(gn.sort((a, b) => b.createdAt - a.createdAt))
       setActivityLogs(al.sort((a, b) => b.createdAt - a.createdAt))
+      setProducts(prods.sort((a, b) => b.createdAt - a.createdAt))
+      setPriceRecords(recs)
       setReady(true)
     })()
     return () => {
@@ -259,6 +303,75 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     await db.deleteActivityLog(id)
   }, [])
 
+  const addProduct = useCallback(async (input: ProductInput) => {
+    const now = Date.now()
+    const product: Product = {
+      id: uid(),
+      name: input.name,
+      unitMode: input.unitMode,
+      memo: input.memo || undefined,
+      createdAt: now,
+      updatedAt: now
+    }
+    await db.putProduct(product)
+    setProducts((prev) => [product, ...prev])
+    return product
+  }, [])
+
+  const updateProduct = useCallback(async (id: string, patch: Partial<ProductInput>) => {
+    let next: Product | undefined
+    setProducts((prev) =>
+      prev.map((p) => {
+        if (p.id !== id) return p
+        next = { ...p, ...patch, updatedAt: Date.now() }
+        return next
+      })
+    )
+    if (next) await db.putProduct(next)
+  }, [])
+
+  const removeProduct = useCallback(async (id: string) => {
+    setProducts((prev) => prev.filter((p) => p.id !== id))
+    setPriceRecords((prev) => prev.filter((r) => r.productId !== id))
+    await db.deleteProduct(id)
+    await db.deletePriceRecordsByProduct(id)
+  }, [])
+
+  const addPriceRecord = useCallback(async (productId: string, input: PriceRecordInput) => {
+    const now = Date.now()
+    const record: PriceRecord = {
+      id: uid(),
+      productId,
+      store: input.store,
+      price: input.price,
+      amount: input.amount,
+      boughtAt: input.boughtAt,
+      memo: input.memo || undefined,
+      createdAt: now,
+      updatedAt: now
+    }
+    await db.putPriceRecord(record)
+    setPriceRecords((prev) => [...prev, record])
+    return record
+  }, [])
+
+  const updatePriceRecord = useCallback(async (id: string, patch: Partial<PriceRecordInput>) => {
+    let next: PriceRecord | undefined
+    setPriceRecords((prev) =>
+      prev.map((r) => {
+        if (r.id !== id) return r
+        next = { ...r, ...patch, updatedAt: Date.now() }
+        return next
+      })
+    )
+    if (next) await db.putPriceRecord(next)
+  }, [])
+
+  const removePriceRecord = useCallback(async (id: string) => {
+    setPriceRecords((prev) => prev.filter((r) => r.id !== id))
+    await db.deletePriceRecord(id)
+  }, [])
+
   const setArchiveDays = useCallback(async (days: number) => {
     setArchiveDaysState(days)
     await db.setMeta('archiveDays', days)
@@ -271,26 +384,46 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const importReplace = useCallback(
-    async (m: Memo[], c: Comparison[], cats: Category[], gn: GoodNew[], al: ActivityLog[]) => {
+    async (
+      m: Memo[],
+      c: Comparison[],
+      cats: Category[],
+      gn: GoodNew[],
+      al: ActivityLog[],
+      prods: Product[],
+      recs: PriceRecord[]
+    ) => {
       const nextCats = cats.length > 0 ? cats : DEFAULT_CATEGORIES
-      await db.replaceAllData(m, c, nextCats, gn, al)
+      await db.replaceAllData(m, c, nextCats, gn, al, prods, recs)
       setMemos(m)
       setComparisons([...c].sort((a, b) => b.savedAt - a.savedAt))
       setCategories(sortCategories(nextCats))
       setGoodNews([...gn].sort((a, b) => b.createdAt - a.createdAt))
       setActivityLogs([...al].sort((a, b) => b.createdAt - a.createdAt))
+      setProducts([...prods].sort((a, b) => b.createdAt - a.createdAt))
+      setPriceRecords(recs)
     },
     []
   )
 
   const importMerge = useCallback(
-    async (m: Memo[], c: Comparison[], cats: Category[], gn: GoodNew[], al: ActivityLog[]) => {
+    async (
+      m: Memo[],
+      c: Comparison[],
+      cats: Category[],
+      gn: GoodNew[],
+      al: ActivityLog[],
+      prods: Product[],
+      recs: PriceRecord[]
+    ) => {
       await Promise.all([
         db.putMemos(m),
         db.putComparisons(c),
         db.putCategories(cats),
         db.putGoodNews(gn),
-        db.putActivityLogs(al)
+        db.putActivityLogs(al),
+        db.putProducts(prods),
+        db.putPriceRecords(recs)
       ])
       const mergeById = <T extends { id: string }>(prev: T[], add: T[]) => {
         const map = new Map(prev.map((x) => [x.id, x]))
@@ -302,6 +435,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setCategories((prev) => sortCategories(mergeById(prev, cats)))
       setGoodNews((prev) => mergeById(prev, gn).sort((a, b) => b.createdAt - a.createdAt))
       setActivityLogs((prev) => mergeById(prev, al).sort((a, b) => b.createdAt - a.createdAt))
+      setProducts((prev) => mergeById(prev, prods).sort((a, b) => b.createdAt - a.createdAt))
+      setPriceRecords((prev) => mergeById(prev, recs))
     },
     []
   )
@@ -314,6 +449,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setCategories(DEFAULT_CATEGORIES)
     setGoodNews([])
     setActivityLogs([])
+    setProducts([])
+    setPriceRecords([])
     setArchiveDaysState(DEFAULT_ARCHIVE_DAYS)
     setLastExportAt(null)
   }, [])
@@ -326,6 +463,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       categories,
       goodNews,
       activityLogs,
+      products,
+      priceRecords,
       archiveDays,
       lastExportAt,
       addMemo,
@@ -343,6 +482,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addActivityLog,
       updateActivityLog,
       removeActivityLog,
+      addProduct,
+      updateProduct,
+      removeProduct,
+      addPriceRecord,
+      updatePriceRecord,
+      removePriceRecord,
       setArchiveDays,
       markExported,
       importReplace,
@@ -350,11 +495,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       eraseAll
     }),
     [
-      ready, memos, comparisons, categories, goodNews, activityLogs, archiveDays, lastExportAt,
+      ready, memos, comparisons, categories, goodNews, activityLogs, products, priceRecords, archiveDays, lastExportAt,
       addMemo, updateMemo, toggleDone, removeMemo, applySortOrders,
       addCategory, removeCategory, saveComparison, removeComparison,
       addGoodNew, updateGoodNew, removeGoodNew,
       addActivityLog, updateActivityLog, removeActivityLog,
+      addProduct, updateProduct, removeProduct, addPriceRecord, updatePriceRecord, removePriceRecord,
       setArchiveDays, markExported, importReplace, importMerge, eraseAll
     ]
   )
@@ -381,13 +527,17 @@ export function useStore(): Store {
 
 // 90日経過などの条件でバックアップのリマインドを表示(仕様書6章)
 export function needsBackupReminder(
-  store: Pick<Store, 'lastExportAt' | 'memos' | 'comparisons' | 'goodNews' | 'activityLogs'>
+  store: Pick<
+    Store,
+    'lastExportAt' | 'memos' | 'comparisons' | 'goodNews' | 'activityLogs' | 'priceRecords'
+  >
 ) {
   const hasData =
     store.memos.length > 0 ||
     store.comparisons.length > 0 ||
     store.goodNews.length > 0 ||
-    store.activityLogs.length > 0
+    store.activityLogs.length > 0 ||
+    store.priceRecords.length > 0
   if (!hasData) return false
   if (store.lastExportAt == null) return true
   return Date.now() - store.lastExportAt > EXPORT_REMIND_DAYS * 86_400_000

@@ -50,6 +50,20 @@ export function isSameDay(ts: number, now = Date.now()) {
   return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate()
 }
 
+// <input type="date"> 用の 'YYYY-MM-DD' 文字列に変換
+export function toDateInputValue(ts: number) {
+  const d = new Date(ts)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+// 'YYYY-MM-DD' 文字列をローカル日付の epoch ms に変換(不正な値は現在時刻)
+export function fromDateInputValue(s: string) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s)
+  if (!m) return Date.now()
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getTime()
+}
+
 export function uid() {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()

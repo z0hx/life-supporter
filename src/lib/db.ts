@@ -1,5 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import type { ActivityLog, Category, Comparison, GoodNew, Memo } from '../types'
+import type { ActivityLog, Category, Comparison, GoodNew, Memo, PriceRecord, Product } from '../types'
 
 interface LifeSupporterDB extends DBSchema {
   memos: { key: string; value: Memo }
@@ -7,11 +7,13 @@ interface LifeSupporterDB extends DBSchema {
   categories: { key: string; value: Category }
   goodNews: { key: string; value: GoodNew }
   activityLogs: { key: string; value: ActivityLog }
+  products: { key: string; value: Product }
+  priceRecords: { key: string; value: PriceRecord }
   meta: { key: string; value: unknown }
 }
 
 const DB_NAME = 'life-supporter'
-const DB_VERSION = 3
+const DB_VERSION = 4
 
 let dbPromise: Promise<IDBPDatabase<LifeSupporterDB>> | null = null
 
@@ -30,6 +32,9 @@ export function getDB() {
           db.createObjectStore('goodNews', { keyPath: 'id' })
         if (!db.objectStoreNames.contains('activityLogs'))
           db.createObjectStore('activityLogs', { keyPath: 'id' })
+        if (!db.objectStoreNames.contains('products')) db.createObjectStore('products', { keyPath: 'id' })
+        if (!db.objectStoreNames.contains('priceRecords'))
+          db.createObjectStore('priceRecords', { keyPath: 'id' })
         if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta')
       }
     })
@@ -97,6 +102,46 @@ export async function deleteActivityLog(id: string) {
   await (await getDB()).delete('activityLogs', id)
 }
 
+export async function getAllProducts() {
+  return (await getDB()).getAll('products')
+}
+export async function putProduct(p: Product) {
+  await (await getDB()).put('products', p)
+}
+export async function putProducts(ps: Product[]) {
+  const tx = (await getDB()).transaction('products', 'readwrite')
+  await Promise.all(ps.map((p) => tx.store.put(p)))
+  await tx.done
+}
+export async function deleteProduct(id: string) {
+  await (await getDB()).delete('products', id)
+}
+
+export async function getAllPriceRecords() {
+  return (await getDB()).getAll('priceRecords')
+}
+export async function putPriceRecord(r: PriceRecord) {
+  await (await getDB()).put('priceRecords', r)
+}
+export async function putPriceRecords(rs: PriceRecord[]) {
+  const tx = (await getDB()).transaction('priceRecords', 'readwrite')
+  await Promise.all(rs.map((r) => tx.store.put(r)))
+  await tx.done
+}
+export async function deletePriceRecord(id: string) {
+  await (await getDB()).delete('priceRecords', id)
+}
+// 商品を削除する際、紐づく価格記録も一括で消す
+export async function deletePriceRecordsByProduct(productId: string) {
+  const db = await getDB()
+  const tx = db.transaction('priceRecords', 'readwrite')
+  const all = await tx.store.getAll()
+  await Promise.all(
+    all.filter((r) => r.productId === productId).map((r) => tx.store.delete(r.id))
+  )
+  await tx.done
+}
+
 export async function getAllCategories() {
   return (await getDB()).getAll('categories')
 }
@@ -122,7 +167,7 @@ export async function setMeta(key: string, value: unknown) {
 export async function clearAllData() {
   const db = await getDB()
   const tx = db.transaction(
-    ['memos', 'comparisons', 'categories', 'goodNews', 'activityLogs', 'meta'],
+    ['memos', 'comparisons', 'categories', 'goodNews', 'activityLogs', 'products', 'priceRecords', 'meta'],
     'readwrite'
   )
   await Promise.all([
@@ -131,6 +176,8 @@ export async function clearAllData() {
     tx.objectStore('categories').clear(),
     tx.objectStore('goodNews').clear(),
     tx.objectStore('activityLogs').clear(),
+    tx.objectStore('products').clear(),
+    tx.objectStore('priceRecords').clear(),
     tx.objectStore('meta').clear()
   ])
   await tx.done
@@ -141,11 +188,13 @@ export async function replaceAllData(
   comparisons: Comparison[],
   categories: Category[],
   goodNews: GoodNew[],
-  activityLogs: ActivityLog[]
+  activityLogs: ActivityLog[],
+  products: Product[],
+  priceRecords: PriceRecord[]
 ) {
   const db = await getDB()
   const tx = db.transaction(
-    ['memos', 'comparisons', 'categories', 'goodNews', 'activityLogs'],
+    ['memos', 'comparisons', 'categories', 'goodNews', 'activityLogs', 'products', 'priceRecords'],
     'readwrite'
   )
   await Promise.all([
@@ -153,14 +202,18 @@ export async function replaceAllData(
     tx.objectStore('comparisons').clear(),
     tx.objectStore('categories').clear(),
     tx.objectStore('goodNews').clear(),
-    tx.objectStore('activityLogs').clear()
+    tx.objectStore('activityLogs').clear(),
+    tx.objectStore('products').clear(),
+    tx.objectStore('priceRecords').clear()
   ])
   await Promise.all([
     ...memos.map((m) => tx.objectStore('memos').put(m)),
     ...comparisons.map((c) => tx.objectStore('comparisons').put(c)),
     ...categories.map((c) => tx.objectStore('categories').put(c)),
     ...goodNews.map((g) => tx.objectStore('goodNews').put(g)),
-    ...activityLogs.map((a) => tx.objectStore('activityLogs').put(a))
+    ...activityLogs.map((a) => tx.objectStore('activityLogs').put(a)),
+    ...products.map((p) => tx.objectStore('products').put(p)),
+    ...priceRecords.map((r) => tx.objectStore('priceRecords').put(r))
   ])
   await tx.done
 }

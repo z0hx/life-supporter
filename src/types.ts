@@ -50,6 +50,28 @@ export interface Category {
   builtin: boolean
 }
 
+// 商品ごとの価格記録(いつ・どの店で・いくらだったか)
+export interface Product {
+  id: string
+  name: string
+  unitMode: UnitMode // その商品の記録に共通する単位(比較の基準を揃える)
+  memo?: string
+  createdAt: number
+  updatedAt: number
+}
+
+export interface PriceRecord {
+  id: string
+  productId: string
+  store: string
+  price: number
+  amount: number
+  boughtAt: number // その価格だった日(過去日を指定して記録できる)
+  memo?: string
+  createdAt: number
+  updatedAt: number
+}
+
 export type GroupBy = 'category' | 'tag' | 'none'
 export type SortBy = 'createdAt' | 'updatedAt' | 'manual'
 export type SortDir = 'desc' | 'asc'
