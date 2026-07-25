@@ -9,19 +9,22 @@ import { useToast } from '../components/Toast'
 import { ProductModal } from './ProductModal'
 import { PriceRecordModal } from './PriceRecordModal'
 
-export function Products({ navigate }: { navigate: (r: string) => void }) {
+export function Products({ route, navigate }: { route: string; navigate: (r: string) => void }) {
   const store = useStore()
-  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [addingProduct, setAddingProduct] = useState(false)
+
+  // 商品IDをハッシュに含めることで、ブラウザ/端末の戻る操作でも
+  // 商品一覧 → ホームと1つずつ状態遷移するようにする
+  const selectedId = route.startsWith('/products/') ? route.slice('/products/'.length) : null
+  const selected = selectedId ? (store.products.find((p) => p.id === selectedId) ?? null) : null
 
   // 選択中の商品が削除された場合は一覧に戻る
   useEffect(() => {
-    if (selectedId && !store.products.some((p) => p.id === selectedId)) setSelectedId(null)
-  }, [selectedId, store.products])
+    if (selectedId && !selected) navigate('/products')
+  }, [selectedId, selected, navigate])
 
-  const selected = selectedId ? (store.products.find((p) => p.id === selectedId) ?? null) : null
   if (selected) {
-    return <ProductDetail product={selected} onBack={() => setSelectedId(null)} />
+    return <ProductDetail product={selected} onBack={() => navigate('/products')} />
   }
 
   return (
@@ -43,7 +46,7 @@ export function Products({ navigate }: { navigate: (r: string) => void }) {
               const best = cheapestOf(p, records)
               const mode = unitModeDef(p.unitMode)
               return (
-                <button key={p.id} className="list-row" onClick={() => setSelectedId(p.id)}>
+                <button key={p.id} className="list-row" onClick={() => navigate(`/products/${p.id}`)}>
                   <div className="list-row-main">
                     <div className="list-row-title">{p.name}</div>
                     <div className="list-row-sub">

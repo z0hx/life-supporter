@@ -40,8 +40,8 @@ function Router() {
         <GoodNew navigate={navigate} />
       ) : route === '/activity' ? (
         <ActivityLog navigate={navigate} />
-      ) : route === '/products' ? (
-        <Products navigate={navigate} />
+      ) : route.startsWith('/products') ? (
+        <Products route={route} navigate={navigate} />
       ) : route === '/settings' ? (
         <Settings navigate={navigate} />
       ) : (
