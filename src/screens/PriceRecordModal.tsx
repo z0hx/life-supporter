@@ -1,10 +1,14 @@
 import { useMemo, useState } from 'react'
-import type { PriceRecord, Product } from '../types'
+import type { PriceRecord, Product, TaxMode } from '../types'
 import { useStore } from '../store'
-import { parseNum, unitModeDef, unitPrice } from '../lib/calc'
+import { parseNum, unitModeDef } from '../lib/calc'
+import { effectiveUnitPrice } from '../lib/priceHistory'
 import { formatDateTime, fromDateInputValue, toDateInputValue } from '../lib/format'
 import { Dialog } from '../components/Dialog'
+import { Segmented } from '../components/Segmented'
 import { useToast } from '../components/Toast'
+
+const QUANTITY_OPTIONS = Array.from({ length: 20 }, (_, i) => i + 1)
 
 export function PriceRecordModal({
   product,
@@ -21,6 +25,9 @@ export function PriceRecordModal({
   const [storeName, setStoreName] = useState(record?.store ?? '')
   const [price, setPrice] = useState(record ? String(record.price) : '')
   const [amount, setAmount] = useState(record ? String(record.amount) : '')
+  const [quantity, setQuantity] = useState(record?.quantity ?? 1)
+  const [taxMode, setTaxMode] = useState<TaxMode>(record?.taxMode ?? 'exclusive')
+  const [discountRate, setDiscountRate] = useState(record?.discountRate != null ? String(record.discountRate) : '')
   const [boughtAt, setBoughtAt] = useState(toDateInputValue(record?.boughtAt ?? Date.now()))
   const [memo, setMemo] = useState(record?.memo ?? '')
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -33,7 +40,9 @@ export function PriceRecordModal({
 
   const p = parseNum(price)
   const a = parseNum(amount)
-  const preview = unitPrice(p, a, product.unitMode)
+  const d = parseNum(discountRate)
+  const discount = Number.isFinite(d) ? d : 0
+  const preview = effectiveUnitPrice({ price: p, amount: a, quantity, taxMode, discountRate: discount }, product.unitMode)
   const canSave = storeName.trim() !== '' && p > 0 && a > 0
 
   const save = async () => {
@@ -42,6 +51,9 @@ export function PriceRecordModal({
       store: storeName.trim(),
       price: p,
       amount: a,
+      quantity,
+      taxMode,
+      discountRate: discount > 0 ? discount : undefined,
       boughtAt: fromDateInputValue(boughtAt),
       memo: memo.trim() || undefined
     }
@@ -115,9 +127,54 @@ export function PriceRecordModal({
             </label>
           </div>
 
+          <div>
+            <div className="field-label">税</div>
+            <Segmented
+              options={[
+                { value: 'exclusive', label: '税別' },
+                { value: 'inclusive', label: '税込み' }
+              ]}
+              value={taxMode}
+              onChange={setTaxMode}
+            />
+          </div>
+
+          <div className="calc-inputs">
+            <label className="calc-input-box">
+              <span className="calc-input-label">個数(セット売りなど)</span>
+              <span className="calc-input-row">
+                <select
+                  className="calc-input"
+                  value={quantity}
+                  onChange={(e) => setQuantity(Number(e.target.value))}
+                >
+                  {QUANTITY_OPTIONS.map((q) => (
+                    <option key={q} value={q}>
+                      {q}
+                    </option>
+                  ))}
+                </select>
+                <span className="unit">個</span>
+              </span>
+            </label>
+            <label className="calc-input-box">
+              <span className="calc-input-label">還元・割引率(任意)</span>
+              <span className="calc-input-row">
+                <input
+                  className="calc-input"
+                  inputMode="decimal"
+                  placeholder="0"
+                  value={discountRate}
+                  onChange={(e) => setDiscountRate(e.target.value)}
+                />
+                <span className="unit">%</span>
+              </span>
+            </label>
+          </div>
+
           {preview != null && (
             <div className="calc-result">
-              単価 ¥{preview.toFixed(1)} / {mode.label}
+              実質単価 ¥{preview.toFixed(1)} / {mode.label}
             </div>
           )}
 

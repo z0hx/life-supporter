@@ -60,12 +60,17 @@ export interface Product {
   updatedAt: number
 }
 
+export type TaxMode = 'exclusive' | 'inclusive'
+
 export interface PriceRecord {
   id: string
   productId: string
   store: string
   price: number
   amount: number
+  quantity?: number // 個数(セット売りを想定。未指定は1として扱う)
+  taxMode?: TaxMode // 税別/税込み(未指定は税別として扱う)
+  discountRate?: number // ポイント還元・割引率(%)。実質価格での比較に使う
   boughtAt: number // その価格だった日(過去日を指定して記録できる)
   memo?: string
   createdAt: number

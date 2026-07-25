@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import type { PriceRecord, Product } from '../types'
 import { useStore } from '../store'
-import { unitModeDef, unitPrice } from '../lib/calc'
-import { cheapestOf, recordsOf } from '../lib/priceHistory'
+import { unitModeDef } from '../lib/calc'
+import { cheapestOf, effectiveUnitPrice, recordsOf } from '../lib/priceHistory'
 import { formatDate } from '../lib/format'
 import { Dialog } from '../components/Dialog'
 import { useToast } from '../components/Toast'
@@ -101,8 +101,10 @@ function ProductDetail({ product, onBack }: { product: Product; onBack: () => vo
         ) : (
           <div className="plain-card">
             {records.map((r) => {
-              const up = unitPrice(r.price, r.amount, product.unitMode)
+              const up = effectiveUnitPrice(r, product.unitMode)
               const isBest = best?.record.id === r.id
+              const qty = r.quantity ?? 1
+              const taxLabel = r.taxMode === 'inclusive' ? '税込' : '税別'
               return (
                 <div key={r.id} className="list-row" style={{ padding: 0 }}>
                   <button
@@ -123,8 +125,11 @@ function ProductDetail({ product, onBack }: { product: Product; onBack: () => vo
                         {r.store}
                       </div>
                       <div className="list-row-sub">
-                        ¥{r.price}(¥{up != null ? up.toFixed(1) : '-'}/{mode.label} ・ {r.amount}
-                        {mode.unit})
+                        ¥{r.price}({taxLabel}
+                        {qty > 1 ? `・${qty}個` : ''}) → ¥{up != null ? up.toFixed(1) : '-'}/{mode.label} ・{' '}
+                        {r.amount}
+                        {mode.unit}
+                        {r.discountRate ? ` ・還元${r.discountRate}%` : ''}
                       </div>
                     </div>
                     <span className="list-row-side">{formatDate(r.boughtAt)}</span>
