@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode
 } from 'react'
-import type { ActivityLog, Category, Comparison, GoodNew, Memo, PriceRecord, Product } from './types'
+import type { ActivityLog, Category, Comparison, GoodNew, Memo, PriceRecord, Product, TaxMode } from './types'
 import * as db from './lib/db'
 import { uid } from './lib/format'
 
@@ -86,6 +86,9 @@ export interface PriceRecordInput {
   store: string
   price: number
   amount: number
+  quantity: number
+  taxMode: TaxMode
+  discountRate?: number
   boughtAt: number
   memo?: string
 }
@@ -345,6 +348,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       store: input.store,
       price: input.price,
       amount: input.amount,
+      quantity: input.quantity,
+      taxMode: input.taxMode,
+      discountRate: input.discountRate,
       boughtAt: input.boughtAt,
       memo: input.memo || undefined,
       createdAt: now,
