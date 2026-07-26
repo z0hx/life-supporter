@@ -129,14 +129,16 @@ export function PriceRecordModal({
 
           <div>
             <div className="field-label">税</div>
-            <Segmented
-              options={[
-                { value: 'exclusive', label: '税別' },
-                { value: 'inclusive', label: '税込み' }
-              ]}
-              value={taxMode}
-              onChange={setTaxMode}
-            />
+            <div style={{ width: 'fit-content' }}>
+              <Segmented
+                options={[
+                  { value: 'exclusive', label: '税別' },
+                  { value: 'inclusive', label: '税込み' }
+                ]}
+                value={taxMode}
+                onChange={setTaxMode}
+              />
+            </div>
           </div>
 
           <div className="calc-inputs">
