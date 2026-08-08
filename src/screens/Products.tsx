@@ -1,13 +1,30 @@
-import { useEffect, useState } from 'react'
-import type { PriceRecord, Product } from '../types'
+import { useEffect, useMemo, useState } from 'react'
+import type { PriceRecord, PriceSort, PriceSortBy, Product, SortDir } from '../types'
 import { useStore } from '../store'
 import { unitModeDef } from '../lib/calc'
-import { cheapestOf, effectiveUnitPrice, recordsOf } from '../lib/priceHistory'
+import { cheapestOf, effectiveUnitPrice, recordsOf, sortRecords } from '../lib/priceHistory'
 import { formatDate } from '../lib/format'
+import { loadPriceSort, savePriceSort } from '../lib/viewSettings'
 import { Dialog } from '../components/Dialog'
 import { useToast } from '../components/Toast'
 import { ProductModal } from './ProductModal'
 import { PriceRecordModal } from './PriceRecordModal'
+
+interface PriceSortOption {
+  label: string
+  short: string
+  sortBy: PriceSortBy
+  sortDir: SortDir
+}
+
+const PRICE_SORT_OPTIONS: PriceSortOption[] = [
+  { label: '単価が安い順', short: '↑ 単価', sortBy: 'unitPrice', sortDir: 'asc' },
+  { label: '単価が高い順', short: '↓ 単価', sortBy: 'unitPrice', sortDir: 'desc' },
+  { label: '購入日(新しい順)', short: '↓ 購入日', sortBy: 'boughtAt', sortDir: 'desc' },
+  { label: '購入日(古い順)', short: '↑ 購入日', sortBy: 'boughtAt', sortDir: 'asc' },
+  { label: '記録した日(新しい順)', short: '↓ 記録日', sortBy: 'createdAt', sortDir: 'desc' },
+  { label: '記録した日(古い順)', short: '↑ 記録日', sortBy: 'createdAt', sortDir: 'asc' }
+]
 
 export function Products({ route, navigate }: { route: string; navigate: (r: string) => void }) {
   const store = useStore()
@@ -78,10 +95,21 @@ function ProductDetail({ product, onBack }: { product: Product; onBack: () => vo
   const [editingProduct, setEditingProduct] = useState(false)
   const [editingRecord, setEditingRecord] = useState<PriceRecord | 'new' | null>(null)
   const [deleting, setDeleting] = useState<PriceRecord | null>(null)
+  const [sort, setSort] = useState<PriceSort>(loadPriceSort)
+  const [sortMenuOpen, setSortMenuOpen] = useState(false)
 
-  const records = recordsOf(product.id, store.priceRecords).sort((a, b) => b.boughtAt - a.boughtAt)
+  // 並び順の選択は永続化し、次に開いたときも同じ見え方にする
+  useEffect(() => savePriceSort(sort), [sort])
+
+  const records = useMemo(
+    () => sortRecords(recordsOf(product.id, store.priceRecords), product, sort),
+    [product, store.priceRecords, sort]
+  )
   const best = cheapestOf(product, records)
   const mode = unitModeDef(product.unitMode)
+  const currentSort =
+    PRICE_SORT_OPTIONS.find((o) => o.sortBy === sort.sortBy && o.sortDir === sort.sortDir) ??
+    PRICE_SORT_OPTIONS[0]
 
   return (
     <div className="screen">
@@ -94,6 +122,14 @@ function ProductDetail({ product, onBack }: { product: Product; onBack: () => vo
           編集
         </button>
       </header>
+
+      {records.length > 0 && (
+        <div className="memo-controls">
+          <button className="sort-btn" onClick={() => setSortMenuOpen(true)}>
+            {currentSort.short} ▾
+          </button>
+        </div>
+      )}
 
       <div className="list-body">
         {records.length === 0 ? (
@@ -132,7 +168,12 @@ function ProductDetail({ product, onBack }: { product: Product; onBack: () => vo
                         {r.discountRate ? ` ・還元${r.discountRate}%` : ''}
                       </div>
                     </div>
-                    <span className="list-row-side">{formatDate(r.boughtAt)}</span>
+                    {/* 並び替えの基準になっている日付を右肩に出し、並び順と表示を一致させる */}
+                    <span className="list-row-side">
+                      {sort.sortBy === 'createdAt'
+                        ? `記録 ${formatDate(r.createdAt)}`
+                        : formatDate(r.boughtAt)}
+                    </span>
                   </button>
                   <button
                     className="row-delete-btn"
@@ -151,6 +192,28 @@ function ProductDetail({ product, onBack }: { product: Product; onBack: () => vo
       <button className="fab" onClick={() => setEditingRecord('new')}>
         ＋ 価格を記録
       </button>
+
+      {sortMenuOpen && (
+        <div className="menu-overlay" onClick={() => setSortMenuOpen(false)}>
+          <div className="sort-menu" onClick={(e) => e.stopPropagation()}>
+            {PRICE_SORT_OPTIONS.map((o) => {
+              const on = o === currentSort
+              return (
+                <button
+                  key={o.label}
+                  onClick={() => {
+                    setSort({ sortBy: o.sortBy, sortDir: o.sortDir })
+                    setSortMenuOpen(false)
+                  }}
+                >
+                  <span style={on ? { fontWeight: 900 } : undefined}>{o.label}</span>
+                  <span className={`radio${on ? ' radio--on' : ''}`} />
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {editingProduct && (
         <ProductModal product={product} onClose={() => setEditingProduct(false)} onDeleted={onBack} />
