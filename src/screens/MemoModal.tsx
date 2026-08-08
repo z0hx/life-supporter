@@ -87,7 +87,6 @@ export function MemoModal({ memo, onClose }: { memo: Memo | null; onClose: () =>
             className="title-input"
             placeholder="タイトル(例:代々木のカレー店)"
             value={title}
-            autoFocus={!memo}
             onChange={(e) => setTitle(e.target.value)}
           />
 

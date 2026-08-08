@@ -207,7 +207,6 @@ export function Calc({
             className="dialog-input"
             placeholder="名前(任意)"
             value={saveName}
-            autoFocus
             onChange={(e) => setSaveName(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') doSave()

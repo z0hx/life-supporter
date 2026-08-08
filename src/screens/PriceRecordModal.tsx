@@ -88,7 +88,6 @@ export function PriceRecordModal({
               list="price-record-stores"
               placeholder="例:イオン 〇〇店"
               value={storeName}
-              autoFocus={!record}
               onChange={(e) => setStoreName(e.target.value)}
             />
             <datalist id="price-record-stores">
