@@ -30,4 +30,4 @@ npm run icons    # public/ のプレースホルダーアイコンを scripts/ma
 
 ## デプロイ
 
-`main` ブランチへの push で `.github/workflows/deploy.yml` が起動し、ビルドと GitHub Pages へのデプロイを行う。`vite.config.ts` では `build` コマンド実行時のみ(`dev` 時は除く)`base: '/life-supporter/'` を設定し、GitHub Pages のサブパスに合わせている — リポジトリ名を変更する場合はこの `base` も合わせて変更すること。
+`main` ブランチへの push で `.github/workflows/deploy.yml` が起動し、ビルドと GitHub Pages へのデプロイを行う。`vite.config.ts` では `build` 時と `preview` 時(`isPreview`)に `base: '/life-supporter/'` を設定し、GitHub Pages のサブパスに合わせている(`dev` は `/`)— リポジトリ名を変更する場合はこの `base` も合わせて変更すること。`preview` は `command === 'serve'` として評価されるため `isPreview` の判定が必要で、これを外すと `dist/index.html` が参照するパスと配信パスがずれて `npm run preview` が真っ白になる。
