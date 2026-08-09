@@ -85,6 +85,7 @@ export interface ViewSettings {
   groupBy: GroupBy
   sortBy: SortBy
   sortDir: SortDir
+  showDone: boolean // 完了済みメモを一覧に出すか
 }
 
 // 商品ごとの価格記録一覧の並び順。boughtAt は購入日、createdAt は記録を入力した日
