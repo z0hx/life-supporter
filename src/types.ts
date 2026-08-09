@@ -86,3 +86,11 @@ export interface ViewSettings {
   sortBy: SortBy
   sortDir: SortDir
 }
+
+// 商品ごとの価格記録一覧の並び順。boughtAt は購入日、createdAt は記録を入力した日
+export type PriceSortBy = 'unitPrice' | 'boughtAt' | 'createdAt'
+
+export interface PriceSort {
+  sortBy: PriceSortBy
+  sortDir: SortDir
+}

@@ -1,4 +1,4 @@
-import type { PriceRecord, Product, TaxMode, UnitMode } from '../types'
+import type { PriceRecord, PriceSort, Product, TaxMode, UnitMode } from '../types'
 import { unitPrice } from './calc'
 
 // 消費税の標準税率。税別記録を税込み換算してから比較するための既定値
@@ -40,6 +40,27 @@ export function cheapestOf(product: Product, records: PriceRecord[]): PriceStat 
     }
   }
   return best
+}
+
+// 一覧の並べ替え。単価を算出できない記録(価格・内容量が壊れているなど)は常に末尾に置く
+export function sortRecords(records: PriceRecord[], product: Product, sort: PriceSort): PriceRecord[] {
+  const dir = sort.sortDir === 'asc' ? 1 : -1
+  return [...records].sort((a, b) => {
+    if (sort.sortBy === 'unitPrice') {
+      const ua = effectiveUnitPrice(a, product.unitMode)
+      const ub = effectiveUnitPrice(b, product.unitMode)
+      if (ua == null || ub == null) {
+        if (ua == null && ub == null) return b.boughtAt - a.boughtAt
+        return ua == null ? 1 : -1
+      }
+      if (ua !== ub) return (ua - ub) * dir
+      return b.boughtAt - a.boughtAt // 同単価なら新しい記録を上に
+    }
+    const va = sort.sortBy === 'boughtAt' ? a.boughtAt : a.createdAt
+    const vb = sort.sortBy === 'boughtAt' ? b.boughtAt : b.createdAt
+    if (va !== vb) return (va - vb) * dir
+    return b.createdAt - a.createdAt
+  })
 }
 
 // 購入日が最も新しい記録

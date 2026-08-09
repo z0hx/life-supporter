@@ -54,7 +54,6 @@ export function ProductModal({
             className="title-input"
             placeholder="商品名(例:卵 Mサイズ10個入り)"
             value={name}
-            autoFocus={!product}
             onChange={(e) => setName(e.target.value)}
           />
 

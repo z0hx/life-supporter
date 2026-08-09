@@ -3,9 +3,11 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // GitHub Pages(https://<user>.github.io/life-supporter/)向けに、
-// ビルド時のみサブパスを base にする。リポジトリ名を変える場合はここを合わせる。
-export default defineConfig(({ command }) => ({
-  base: command === 'build' ? '/life-supporter/' : '/',
+// ビルド時とプレビュー時はサブパスを base にする。リポジトリ名を変える場合はここを合わせる。
+// preview は command === 'serve' として評価されるため、isPreview も見ないと
+// dist/index.html が参照する /life-supporter/... と配信パスがずれて真っ白になる。
+export default defineConfig(({ command, isPreview }) => ({
+  base: command === 'build' || isPreview ? '/life-supporter/' : '/',
   plugins: [
     react(),
     VitePWA({

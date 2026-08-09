@@ -1,13 +1,20 @@
-import type { ViewSettings } from '../types'
+import type { PriceSort, ViewSettings } from '../types'
 
 // ViewSettings のみ localStorage(仕様書6章)
 const VS_KEY = 'life-supporter:viewSettings'
 const COLLAPSED_KEY = 'life-supporter:collapsedGroups'
+const PRICE_SORT_KEY = 'life-supporter:priceSort'
 
 export const DEFAULT_VIEW_SETTINGS: ViewSettings = {
   groupBy: 'category',
   sortBy: 'updatedAt',
   sortDir: 'desc'
+}
+
+// 価格記録は「どこが一番安いか」を見るための画面なので、既定は単価の安い順
+export const DEFAULT_PRICE_SORT: PriceSort = {
+  sortBy: 'unitPrice',
+  sortDir: 'asc'
 }
 
 export function loadViewSettings(): ViewSettings {
@@ -30,6 +37,27 @@ export function loadViewSettings(): ViewSettings {
 
 export function saveViewSettings(vs: ViewSettings) {
   localStorage.setItem(VS_KEY, JSON.stringify(vs))
+}
+
+export function loadPriceSort(): PriceSort {
+  try {
+    const raw = localStorage.getItem(PRICE_SORT_KEY)
+    if (!raw) return DEFAULT_PRICE_SORT
+    const v = JSON.parse(raw)
+    if (
+      ['unitPrice', 'boughtAt', 'createdAt'].includes(v.sortBy) &&
+      ['desc', 'asc'].includes(v.sortDir)
+    ) {
+      return v as PriceSort
+    }
+  } catch {
+    // 壊れた値は既定に戻す
+  }
+  return DEFAULT_PRICE_SORT
+}
+
+export function savePriceSort(sort: PriceSort) {
+  localStorage.setItem(PRICE_SORT_KEY, JSON.stringify(sort))
 }
 
 export function loadCollapsedGroups(): string[] {
