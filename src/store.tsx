@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode
 } from 'react'
@@ -104,6 +105,15 @@ export interface MemoInput {
 
 const StoreContext = createContext<Store | null>(null)
 
+// setState に渡す更新関数はその場で実行される保証がないため、更新関数の中で外側の
+// 変数に代入して永続化しようとすると書き込みが飛ぶことがある。永続化する値は
+// 最新の state を保持する ref から組み立てる。
+function useLatest<T>(value: T) {
+  const ref = useRef(value)
+  ref.current = value
+  return ref
+}
+
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false)
   const [memos, setMemos] = useState<Memo[]>([])
@@ -115,6 +125,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [priceRecords, setPriceRecords] = useState<PriceRecord[]>([])
   const [archiveDays, setArchiveDaysState] = useState(DEFAULT_ARCHIVE_DAYS)
   const [lastExportAt, setLastExportAt] = useState<number | null>(null)
+
+  const memosRef = useLatest(memos)
+  const goodNewsRef = useLatest(goodNews)
+  const activityLogsRef = useLatest(activityLogs)
+  const productsRef = useLatest(products)
+  const priceRecordsRef = useLatest(priceRecords)
 
   useEffect(() => {
     let cancelled = false
@@ -188,28 +204,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const updateMemo = useCallback(async (id: string, patch: Partial<Memo>) => {
-    let next: Memo | undefined
-    setMemos((prev) =>
-      prev.map((m) => {
-        if (m.id !== id) return m
-        next = { ...m, ...patch, updatedAt: Date.now() }
-        return next
-      })
-    )
-    if (next) await db.putMemo(next)
+    const current = memosRef.current.find((m) => m.id === id)
+    if (!current) return
+    const next: Memo = { ...current, ...patch, updatedAt: Date.now() }
+    setMemos((prev) => prev.map((m) => (m.id === id ? next : m)))
+    await db.putMemo(next)
   }, [])
 
   const toggleDone = useCallback(async (id: string) => {
-    let next: Memo | undefined
-    setMemos((prev) =>
-      prev.map((m) => {
-        if (m.id !== id) return m
-        const done = !m.done
-        next = { ...m, done, doneAt: done ? Date.now() : undefined, updatedAt: Date.now() }
-        return next
-      })
-    )
-    if (next) await db.putMemo(next)
+    const current = memosRef.current.find((m) => m.id === id)
+    if (!current) return
+    const done = !current.done
+    const next: Memo = { ...current, done, doneAt: done ? Date.now() : undefined, updatedAt: Date.now() }
+    setMemos((prev) => prev.map((m) => (m.id === id ? next : m)))
+    await db.putMemo(next)
   }, [])
 
   const removeMemo = useCallback(async (id: string) => {
@@ -219,17 +227,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const applySortOrders = useCallback(async (orders: { id: string; sortOrder: number }[]) => {
     const map = new Map(orders.map((o) => [o.id, o.sortOrder]))
-    const changed: Memo[] = []
-    setMemos((prev) =>
-      prev.map((m) => {
+    const changed = memosRef.current
+      .filter((m) => {
         const so = map.get(m.id)
-        if (so === undefined || so === m.sortOrder) return m
-        const next = { ...m, sortOrder: so }
-        changed.push(next)
-        return next
+        return so !== undefined && so !== m.sortOrder
       })
-    )
-    if (changed.length > 0) await db.putMemos(changed)
+      .map((m) => ({ ...m, sortOrder: map.get(m.id)! }))
+    if (changed.length === 0) return
+    const byId = new Map(changed.map((m) => [m.id, m]))
+    setMemos((prev) => prev.map((m) => byId.get(m.id) ?? m))
+    await db.putMemos(changed)
   }, [])
 
   const addCategory = useCallback(async (label: string) => {
@@ -265,15 +272,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const updateGoodNew = useCallback(async (id: string, text: string) => {
-    let next: GoodNew | undefined
-    setGoodNews((prev) =>
-      prev.map((g) => {
-        if (g.id !== id) return g
-        next = { ...g, text, updatedAt: Date.now() }
-        return next
-      })
-    )
-    if (next) await db.putGoodNew(next)
+    const current = goodNewsRef.current.find((g) => g.id === id)
+    if (!current) return
+    const next: GoodNew = { ...current, text, updatedAt: Date.now() }
+    setGoodNews((prev) => prev.map((g) => (g.id === id ? next : g)))
+    await db.putGoodNew(next)
   }, [])
 
   const removeGoodNew = useCallback(async (id: string) => {
@@ -290,15 +293,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const updateActivityLog = useCallback(async (id: string, text: string) => {
-    let next: ActivityLog | undefined
-    setActivityLogs((prev) =>
-      prev.map((a) => {
-        if (a.id !== id) return a
-        next = { ...a, text, updatedAt: Date.now() }
-        return next
-      })
-    )
-    if (next) await db.putActivityLog(next)
+    const current = activityLogsRef.current.find((a) => a.id === id)
+    if (!current) return
+    const next: ActivityLog = { ...current, text, updatedAt: Date.now() }
+    setActivityLogs((prev) => prev.map((a) => (a.id === id ? next : a)))
+    await db.putActivityLog(next)
   }, [])
 
   const removeActivityLog = useCallback(async (id: string) => {
@@ -322,15 +321,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const updateProduct = useCallback(async (id: string, patch: Partial<ProductInput>) => {
-    let next: Product | undefined
-    setProducts((prev) =>
-      prev.map((p) => {
-        if (p.id !== id) return p
-        next = { ...p, ...patch, updatedAt: Date.now() }
-        return next
-      })
-    )
-    if (next) await db.putProduct(next)
+    const current = productsRef.current.find((p) => p.id === id)
+    if (!current) return
+    const next: Product = { ...current, ...patch, updatedAt: Date.now() }
+    setProducts((prev) => prev.map((p) => (p.id === id ? next : p)))
+    await db.putProduct(next)
   }, [])
 
   const removeProduct = useCallback(async (id: string) => {
@@ -362,15 +357,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const updatePriceRecord = useCallback(async (id: string, patch: Partial<PriceRecordInput>) => {
-    let next: PriceRecord | undefined
-    setPriceRecords((prev) =>
-      prev.map((r) => {
-        if (r.id !== id) return r
-        next = { ...r, ...patch, updatedAt: Date.now() }
-        return next
-      })
-    )
-    if (next) await db.putPriceRecord(next)
+    const current = priceRecordsRef.current.find((r) => r.id === id)
+    if (!current) return
+    const next: PriceRecord = { ...current, ...patch, updatedAt: Date.now() }
+    setPriceRecords((prev) => prev.map((r) => (r.id === id ? next : r)))
+    await db.putPriceRecord(next)
   }, [])
 
   const removePriceRecord = useCallback(async (id: string) => {

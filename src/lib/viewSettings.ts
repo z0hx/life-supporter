@@ -8,7 +8,8 @@ const PRICE_SORT_KEY = 'life-supporter:priceSort'
 export const DEFAULT_VIEW_SETTINGS: ViewSettings = {
   groupBy: 'category',
   sortBy: 'updatedAt',
-  sortDir: 'desc'
+  sortDir: 'desc',
+  showDone: true
 }
 
 // 価格記録は「どこが一番安いか」を見るための画面なので、既定は単価の安い順
@@ -27,7 +28,8 @@ export function loadViewSettings(): ViewSettings {
       ['createdAt', 'updatedAt', 'manual'].includes(v.sortBy) &&
       ['desc', 'asc'].includes(v.sortDir)
     ) {
-      return v as ViewSettings
+      // showDone を持たない旧バージョンの保存値は、従来どおり表示する側に寄せる
+      return { ...(v as ViewSettings), showDone: typeof v.showDone === 'boolean' ? v.showDone : true }
     }
   } catch {
     // 壊れた値は既定に戻す
