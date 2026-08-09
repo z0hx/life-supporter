@@ -4,6 +4,7 @@ import { useStore } from '../store'
 import { unitModeDef } from '../lib/calc'
 import { cheapestOf, effectiveUnitPrice, recordsOf, sortRecords } from '../lib/priceHistory'
 import { formatDate } from '../lib/format'
+import { copyText } from '../lib/clipboard'
 import { loadPriceSort, savePriceSort } from '../lib/viewSettings'
 import { Dialog } from '../components/Dialog'
 import { useToast } from '../components/Toast'
@@ -53,7 +54,7 @@ export function Products({ route, navigate }: { route: string; navigate: (r: str
         <h1 className="screen-title">価格記録</h1>
       </header>
 
-      <div className="list-body">
+      <div className="list-body list-body--fab">
         {store.products.length === 0 ? (
           <div className="memo-empty">商品はまだありません。{'\n'}「＋ 商品を追加」から始めましょう</div>
         ) : (
@@ -117,7 +118,22 @@ function ProductDetail({ product, onBack }: { product: Product; onBack: () => vo
         <button className="back-btn" aria-label="価格記録一覧へ戻る" onClick={onBack}>
           ‹
         </button>
-        <h1 className="screen-title">{product.name}</h1>
+        {/* 商品名はタップでコピーできる(検索欄や買い物メモへの貼り付け用) */}
+        <h1 className="screen-title screen-title--copy">
+          <button
+            className="copy-title-btn"
+            aria-label={`商品名「${product.name}」をコピー`}
+            onClick={async () => {
+              const ok = await copyText(product.name)
+              toast(ok ? '商品名をコピーしました' : 'コピーできませんでした')
+            }}
+          >
+            <span className="copy-title-text">{product.name}</span>
+            <span className="copy-title-icon" aria-hidden="true">
+              📋
+            </span>
+          </button>
+        </h1>
         <button className="header-action" onClick={() => setEditingProduct(true)}>
           編集
         </button>
@@ -131,7 +147,7 @@ function ProductDetail({ product, onBack }: { product: Product; onBack: () => vo
         </div>
       )}
 
-      <div className="list-body">
+      <div className="list-body list-body--fab">
         {records.length === 0 ? (
           <div className="memo-empty">価格記録はまだありません。{'\n'}「＋ 価格を記録」から始めましょう</div>
         ) : (

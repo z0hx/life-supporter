@@ -116,6 +116,35 @@ textarea::placeholder {
   font-weight: 900;
   color: var(--ink);
 }
+/* タップでコピーできるタイトル。長い名前は省略し「編集」を画面外に押し出さない */
+.screen-title--copy {
+  flex: 1;
+  min-width: 0;
+}
+.copy-title-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-height: 44px;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  text-align: left;
+}
+.copy-title-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.copy-title-icon {
+  flex: none;
+  font-size: 14px;
+  opacity: 0.5;
+}
+.copy-title-btn:active .copy-title-icon {
+  opacity: 1;
+}
 .back-btn {
   font-size: 22px;
   color: var(--ink-3);
@@ -991,6 +1020,16 @@ textarea::placeholder {
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+/* スクロール領域は flex コンテナなので、中身が縮められるとカード(overflow:hidden)が
+   はみ出した行を切り落とし、スクロールもできなくなる。子は縮めない */
+.list-body > * {
+  flex: none;
+}
+/* 画面下部に固定ボタン(.fab)がある画面では、最後の行がボタンに隠れないよう
+   スクロール領域の下に余白を確保する(.memo-scroll と同じ考え方) */
+.list-body--fab {
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
 .plain-card {
   background: var(--card);
