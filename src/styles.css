@@ -116,7 +116,7 @@ textarea::placeholder {
   font-weight: 900;
   color: var(--ink);
 }
-/* タップでコピーできるタイトル。長い名前は省略し「編集」を画面外に押し出さない */
+/* タップでコピーできるタイトル。長い名前は折り返して全文を表示する */
 .screen-title--copy {
   flex: 1;
   min-width: 0;
@@ -124,7 +124,6 @@ textarea::placeholder {
 .copy-title-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
   max-width: 100%;
   min-height: 44px;
   font-size: inherit;
@@ -133,14 +132,16 @@ textarea::placeholder {
   text-align: left;
 }
 .copy-title-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.3;
+  /* 区切りのない長い文字列でもはみ出さずに折り返す */
+  overflow-wrap: anywhere;
 }
+/* アイコンは末尾の文字に続けて流し、折り返しても最後の行に付くようにする */
 .copy-title-icon {
-  flex: none;
+  margin-left: 6px;
   font-size: 14px;
   opacity: 0.5;
+  white-space: nowrap;
 }
 .copy-title-btn:active .copy-title-icon {
   opacity: 1;

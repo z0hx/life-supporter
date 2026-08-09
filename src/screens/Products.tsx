@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { PriceRecord, PriceSort, PriceSortBy, Product, SortDir } from '../types'
 import { useStore } from '../store'
 import { unitModeDef } from '../lib/calc'
@@ -98,6 +98,8 @@ function ProductDetail({ product, onBack }: { product: Product; onBack: () => vo
   const [deleting, setDeleting] = useState<PriceRecord | null>(null)
   const [sort, setSort] = useState<PriceSort>(loadPriceSort)
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
+  const [menuTop, setMenuTop] = useState<number>()
+  const sortBtnRef = useRef<HTMLButtonElement>(null)
 
   // 並び順の選択は永続化し、次に開いたときも同じ見え方にする
   useEffect(() => savePriceSort(sort), [sort])
@@ -128,9 +130,11 @@ function ProductDetail({ product, onBack }: { product: Product; onBack: () => vo
               toast(ok ? '商品名をコピーしました' : 'コピーできませんでした')
             }}
           >
-            <span className="copy-title-text">{product.name}</span>
-            <span className="copy-title-icon" aria-hidden="true">
-              📋
+            <span className="copy-title-text">
+              {product.name}
+              <span className="copy-title-icon" aria-hidden="true">
+                📋
+              </span>
             </span>
           </button>
         </h1>
@@ -141,7 +145,16 @@ function ProductDetail({ product, onBack }: { product: Product; onBack: () => vo
 
       {records.length > 0 && (
         <div className="memo-controls">
-          <button className="sort-btn" onClick={() => setSortMenuOpen(true)}>
+          <button
+            ref={sortBtnRef}
+            className="sort-btn"
+            onClick={() => {
+              // 商品名が折り返してヘッダーの高さが変わるため、ボタンの実位置からメニューを出す
+              const rect = sortBtnRef.current?.getBoundingClientRect()
+              setMenuTop(rect ? rect.bottom + 8 : undefined)
+              setSortMenuOpen(true)
+            }}
+          >
             {currentSort.short} ▾
           </button>
         </div>
@@ -211,7 +224,11 @@ function ProductDetail({ product, onBack }: { product: Product; onBack: () => vo
 
       {sortMenuOpen && (
         <div className="menu-overlay" onClick={() => setSortMenuOpen(false)}>
-          <div className="sort-menu" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="sort-menu"
+            style={menuTop != null ? { top: menuTop } : undefined}
+            onClick={(e) => e.stopPropagation()}
+          >
             {PRICE_SORT_OPTIONS.map((o) => {
               const on = o === currentSort
               return (
