@@ -634,13 +634,6 @@ textarea::placeholder {
 }
 
 /* ===== モーダル(メモ追加・編集) ===== */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(74, 66, 56, 0.35);
-  z-index: 40;
-  animation: fade-in 0.18s ease both;
-}
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -648,18 +641,6 @@ textarea::placeholder {
   to {
     opacity: 1;
   }
-}
-.modal {
-  position: fixed;
-  inset: 0;
-  z-index: 41;
-  background: var(--bg);
-  max-width: 430px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  animation: modal-in 0.22s ease both;
-  overflow: hidden;
 }
 @keyframes modal-in {
   from {
@@ -695,16 +676,6 @@ textarea::placeholder {
 }
 .modal-save:disabled {
   color: var(--ink-faint);
-}
-.modal-body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 0 18px calc(24px + env(safe-area-inset-bottom));
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
 }
 .field-label {
   font-size: 13px;
@@ -762,49 +733,6 @@ textarea::placeholder {
   width: 130px;
   background: #fff;
   outline: none;
-}
-.tag-box {
-  background: #fff;
-  border-radius: var(--radius-input);
-  border: 1px solid var(--line);
-  padding: 12px 14px;
-  display: flex;
-  gap: 7px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-.tag-box:focus-within {
-  border-color: var(--accent);
-}
-.tag-box .tag-chip {
-  font-size: 13px;
-  padding: 5px 12px;
-  min-height: 30px;
-}
-.tag-input {
-  flex: 1;
-  min-width: 110px;
-  border: none;
-  outline: none;
-  font-size: 15px;
-  padding: 4px 2px;
-  background: none;
-}
-.tag-suggests {
-  display: flex;
-  gap: 7px;
-  flex-wrap: wrap;
-  margin-top: 9px;
-}
-.tag-suggest {
-  white-space: nowrap;
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--ink-2);
-  background: var(--line-soft);
-  border-radius: 999px;
-  padding: 6px 12px;
-  min-height: 32px;
 }
 .note-input {
   width: 100%;
@@ -1465,4 +1393,749 @@ textarea::placeholder {
   padding: 48px 20px;
   font-weight: 700;
   white-space: pre-wrap;
+}
+
+/* ===== メモ v2:テンプレート式のフィールド ===== */
+
+/* 全画面エディタ(メモ・テンプレート共通) */
+.editor-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 41;
+  background: var(--bg);
+  max-width: 430px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  animation: modal-in 0.22s ease both;
+  overflow: hidden;
+}
+.editor-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 18px calc(28px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.editor-template {
+  align-self: flex-start;
+  font-size: 12.5px;
+  font-weight: 900;
+  color: var(--ink-2);
+  background: var(--line-soft);
+  border-radius: 999px;
+  padding: 5px 12px;
+}
+.editor-fields-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+.editor-fields-head .field-label {
+  margin-bottom: 0;
+}
+.link-btn {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--accent);
+  min-height: 44px;
+  padding: 0 4px;
+}
+.editor-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.editor-field-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.editor-field-head .field-label {
+  margin-bottom: 0;
+}
+.editor-field-tools {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+.editor-field-tools button {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  color: var(--ink-2);
+  font-size: 14px;
+  background: var(--line-soft);
+}
+.editor-field-tools button:disabled {
+  color: var(--ink-faint);
+  opacity: 0.5;
+}
+.editor-heading {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 6px;
+  margin-top: 6px;
+}
+.editor-add-field {
+  width: 100%;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-input);
+  padding: 14px;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--ink-2);
+  background: #fff;
+}
+.editor-secondary {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+  padding: 14px;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--ink-2);
+  background: #fff;
+}
+
+/* 入力の共通部品 */
+.field-input {
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+  padding: 13px 15px;
+  font-size: 15px;
+  outline: none;
+  min-height: 46px;
+}
+.field-input:focus {
+  border-color: var(--accent);
+}
+.field-input--narrow {
+  width: 116px;
+  flex: none;
+}
+.field-input--number {
+  width: 140px;
+  flex: none;
+}
+.field-input--emoji {
+  width: 60px;
+  flex: none;
+  text-align: center;
+  font-size: 20px;
+}
+.field-input--label {
+  font-weight: 900;
+  font-size: 14px;
+  padding: 9px 12px;
+  min-height: 40px;
+  border-radius: 12px;
+}
+.field-textarea {
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+  padding: 14px 16px;
+  font-size: 15px;
+  resize: vertical;
+  outline: none;
+}
+.field-textarea:focus {
+  border-color: var(--accent);
+}
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.field-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.field-unit {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--ink-2);
+}
+.field-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--accent);
+  font-size: 13.5px;
+  font-weight: 900;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.field-action:disabled {
+  color: var(--ink-faint);
+}
+.field-action--quiet {
+  color: var(--ink-3);
+}
+.field-hint {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-3);
+  line-height: 1.6;
+}
+.field-error {
+  font-size: 12.5px;
+  font-weight: 900;
+  color: var(--accent);
+}
+.field-config-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink-2);
+  padding: 4px 0;
+}
+.field-config-row > span:first-child {
+  white-space: nowrap;
+}
+.field-config-row--check {
+  cursor: pointer;
+}
+.field-config-row--check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+.field-config-row--stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+/* チェックリスト */
+.checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+  padding: 8px;
+}
+.checklist-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 4px;
+}
+.checklist-text {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  font-size: 15px;
+  padding: 10px 0;
+}
+.checklist-row--done .checklist-text {
+  text-decoration: line-through;
+  color: var(--ink-3);
+}
+.checklist-remove {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  color: var(--ink-faint);
+  font-size: 13px;
+  flex: none;
+}
+.checklist-add {
+  align-self: flex-start;
+  font-size: 13.5px;
+  font-weight: 900;
+  color: var(--accent);
+  padding: 10px 6px;
+  min-height: 40px;
+}
+
+/* リンク・選択肢 */
+.link-list,
+.option-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.link-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* 評価 */
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.rating-star {
+  width: 40px;
+  height: 44px;
+  font-size: 24px;
+  color: var(--line);
+  line-height: 1;
+}
+.rating-star--on {
+  color: var(--accent);
+}
+.rating-clear {
+  margin-left: 8px;
+  font-size: 12.5px;
+  font-weight: 900;
+  color: var(--ink-3);
+  min-height: 44px;
+  padding: 0 6px;
+}
+
+/* はい / いいえ */
+.toggle {
+  width: 58px;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--line);
+  padding: 3px;
+  display: flex;
+  transition: background 0.16s ease;
+}
+.toggle--on {
+  background: var(--accent);
+}
+.toggle-knob {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(74, 66, 56, 0.25);
+  transition: transform 0.16s ease;
+}
+.toggle--on .toggle-knob {
+  transform: translateX(24px);
+}
+
+/* ===== 地図 ===== */
+.map-canvas {
+  width: 100%;
+  height: 100%;
+  min-height: 160px;
+  background: var(--line-soft);
+}
+.map-canvas--loading::after {
+  content: '地図を読み込んでいます…';
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-3);
+}
+.map-canvas--tall {
+  min-height: 100%;
+}
+.map-canvas--offline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-3);
+}
+.map-preview {
+  display: block;
+  width: 100%;
+  height: 160px;
+  border-radius: var(--radius-input);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  padding: 0;
+}
+.location-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13.5px;
+}
+.location-meta b {
+  font-weight: 900;
+}
+.location-meta span {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-3);
+  line-height: 1.55;
+}
+
+/* マーカー(既定のアイコン画像は使わず CSS で描く) */
+.map-pin {
+  display: block;
+  width: 20px;
+  height: 20px;
+  margin: 2px;
+  background: var(--accent);
+  border: 2px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 2px 5px rgba(74, 66, 56, 0.35);
+}
+
+/* 地点を選ぶ全画面ピッカー */
+.map-picker {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: var(--bg);
+  max-width: 430px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  animation: modal-in 0.22s ease both;
+}
+.map-search {
+  display: flex;
+  gap: 8px;
+  padding: 0 18px 12px;
+}
+.map-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.map-crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* ピンの先端が中心に来るよう、高さぶん持ち上げる */
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  z-index: 500;
+}
+.map-locate {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 500;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-card);
+  font-size: 20px;
+  color: var(--accent);
+}
+.map-offline {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 12px;
+  z-index: 500;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-2);
+  box-shadow: var(--shadow-card);
+}
+.map-results {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 12px;
+  z-index: 500;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  max-height: 60%;
+  overflow-y: auto;
+}
+.map-results button {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  padding: 12px 15px;
+  min-height: 56px;
+}
+.map-results button:not(:last-child) {
+  border-bottom: 1px solid var(--line-soft);
+}
+.map-results b {
+  font-size: 14.5px;
+  font-weight: 900;
+}
+.map-results span {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-3);
+  line-height: 1.5;
+}
+.map-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 18px calc(16px + env(safe-area-inset-bottom));
+}
+/* Leaflet の帰属表示を本文のトーンに合わせる(表示自体は規約上必須) */
+.leaflet-container {
+  font-family: var(--font);
+  background: var(--line-soft);
+}
+.leaflet-control-attribution {
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+/* ===== ボトムシート(項目・テンプレート選択) ===== */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(74, 66, 56, 0.35);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fade-in 0.16s ease both;
+}
+.sheet {
+  width: 100%;
+  max-width: 430px;
+  background: var(--bg);
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: sheet-up 0.22s ease both;
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.sheet-title {
+  font-size: 17px;
+  font-weight: 900;
+  padding: 0 6px;
+}
+.sheet-list {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--card);
+  border-radius: var(--radius-list);
+  box-shadow: var(--shadow-card);
+}
+.sheet-list button {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  text-align: left;
+  padding: 13px 15px;
+  min-height: 60px;
+}
+.sheet-list button:not(:last-child) {
+  border-bottom: 1px solid var(--line-soft);
+}
+.sheet-icon {
+  font-size: 20px;
+  width: 26px;
+  text-align: center;
+  flex: none;
+}
+.sheet-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.sheet-text b {
+  font-size: 15px;
+  font-weight: 900;
+}
+.sheet-text span {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-3);
+  line-height: 1.5;
+}
+.sheet-footer-btn {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: var(--radius-input);
+  padding: 14px;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--ink-2);
+}
+
+/* ===== テンプレート管理 ===== */
+.screen-note {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-3);
+  line-height: 1.65;
+}
+.template-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px 4px 0;
+}
+.template-row:not(:last-child) {
+  border-bottom: 1px solid var(--line-soft);
+}
+.template-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  padding: 12px 14px;
+  min-height: 60px;
+}
+.template-emoji {
+  font-size: 20px;
+  flex: none;
+}
+.template-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.template-text b {
+  font-size: 15px;
+  font-weight: 900;
+}
+.template-text span {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-3);
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.template-action {
+  width: 40px;
+  height: 44px;
+  color: var(--ink-faint);
+  font-size: 15px;
+  flex: none;
+}
+
+/* テンプレート編集の項目カード */
+.tfield {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tfield-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tfield-icon {
+  font-size: 17px;
+  flex: none;
+}
+/* カード幅いっぱいのタップ領域にする(店頭での片手操作前提・44px以上) */
+.tfield-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  font-size: 12.5px;
+  font-weight: 900;
+  color: var(--ink-3);
+  padding: 6px 2px;
+  min-height: 44px;
+}
+.tfield-toggle .chevron {
+  font-size: 10px;
+  transition: transform 0.16s ease;
+}
+.tfield-toggle .chevron--collapsed {
+  transform: rotate(-90deg);
+}
+.tfield-config {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-top: 1px solid var(--line-soft);
+  padding-top: 8px;
+}
+
+/* ===== 一覧の要約・ラベル管理 ===== */
+.memo-row-summary {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--ink-2);
+  background: var(--line-soft);
+  border-radius: 999px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+.label-emoji-input {
+  width: 44px;
+  flex: none;
+  text-align: center;
+  font-size: 17px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 7px 0;
+  background: #fff;
+  outline: none;
+}
+.label-name-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 10px 8px;
 }

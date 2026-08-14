@@ -1,81 +1,27 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode
-} from 'react'
-import type { ActivityLog, Category, Comparison, GoodNew, Memo, PriceRecord, Product, TaxMode } from './types'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import type {
+  ActivityLog,
+  Comparison,
+  GoodNew,
+  Label,
+  Memo,
+  MemoField,
+  PriceRecord,
+  Priority,
+  Product,
+  TaxMode,
+  Template
+} from './types'
 import * as db from './lib/db'
 import { uid } from './lib/format'
+import { DEFAULT_LABELS, buildDefaultTemplates } from './lib/defaults'
+import { instantiate, toTemplateField } from './fields'
+import { StoreContext, useStore } from './storeContext'
 
-export const DEFAULT_CATEGORIES: Category[] = [
-  { id: 'shopping', label: '買い物', emoji: '🛒', builtin: true },
-  { id: 'restaurant', label: '行きたい店', emoji: '🍜', builtin: true },
-  { id: 'place', label: '場所', emoji: '🗺', builtin: true },
-  { id: 'other', label: 'その他', builtin: true }
-]
+export { useStore }
 
 const DEFAULT_ARCHIVE_DAYS = 30
 const EXPORT_REMIND_DAYS = 90
-
-interface Store {
-  ready: boolean
-  memos: Memo[]
-  comparisons: Comparison[]
-  categories: Category[]
-  goodNews: GoodNew[]
-  activityLogs: ActivityLog[]
-  products: Product[]
-  priceRecords: PriceRecord[]
-  archiveDays: number // 0 = 自動アーカイブしない
-  lastExportAt: number | null
-  addMemo: (input: MemoInput) => Promise<Memo>
-  updateMemo: (id: string, patch: Partial<Memo>) => Promise<void>
-  toggleDone: (id: string) => Promise<void>
-  removeMemo: (id: string) => Promise<void>
-  applySortOrders: (orders: { id: string; sortOrder: number }[]) => Promise<void>
-  addCategory: (label: string) => Promise<Category>
-  removeCategory: (id: string) => Promise<void>
-  saveComparison: (c: Omit<Comparison, 'id' | 'savedAt'>) => Promise<Comparison>
-  removeComparison: (id: string) => Promise<void>
-  addGoodNew: (text: string) => Promise<GoodNew>
-  updateGoodNew: (id: string, text: string) => Promise<void>
-  removeGoodNew: (id: string) => Promise<void>
-  addActivityLog: (text: string) => Promise<ActivityLog>
-  updateActivityLog: (id: string, text: string) => Promise<void>
-  removeActivityLog: (id: string) => Promise<void>
-  addProduct: (input: ProductInput) => Promise<Product>
-  updateProduct: (id: string, patch: Partial<ProductInput>) => Promise<void>
-  removeProduct: (id: string) => Promise<void>
-  addPriceRecord: (productId: string, input: PriceRecordInput) => Promise<PriceRecord>
-  updatePriceRecord: (id: string, patch: Partial<PriceRecordInput>) => Promise<void>
-  removePriceRecord: (id: string) => Promise<void>
-  setArchiveDays: (days: number) => Promise<void>
-  markExported: () => Promise<void>
-  importReplace: (
-    memos: Memo[],
-    comparisons: Comparison[],
-    categories: Category[],
-    goodNews: GoodNew[],
-    activityLogs: ActivityLog[],
-    products: Product[],
-    priceRecords: PriceRecord[]
-  ) => Promise<void>
-  importMerge: (
-    memos: Memo[],
-    comparisons: Comparison[],
-    categories: Category[],
-    goodNews: GoodNew[],
-    activityLogs: ActivityLog[],
-    products: Product[],
-    priceRecords: PriceRecord[]
-  ) => Promise<void>
-  eraseAll: () => Promise<void>
-}
 
 export interface ProductInput {
   name: string
@@ -94,16 +40,73 @@ export interface PriceRecordInput {
   memo?: string
 }
 
-export interface MemoInput {
+export interface MemoDraft {
+  templateId: string | null
+  templateName: string
   title: string
-  category: string
-  tags: string[]
-  priority: 'normal' | 'high'
-  note?: string
-  source?: string
+  labels: string[]
+  fields: MemoField[]
+  priority: Priority
 }
 
-const StoreContext = createContext<Store | null>(null)
+export interface Store {
+  ready: boolean
+  memos: Memo[]
+  templates: Template[]
+  labels: Label[]
+  comparisons: Comparison[]
+  goodNews: GoodNew[]
+  activityLogs: ActivityLog[]
+  products: Product[]
+  priceRecords: PriceRecord[]
+  archiveDays: number // 0 = 自動アーカイブしない
+  lastExportAt: number | null
+
+  addMemo: (draft: MemoDraft) => Promise<Memo>
+  /** テンプレートから空のメモ下書きを作る(まだ保存はしない) */
+  draftFromTemplate: (template: Template) => MemoDraft
+  updateMemo: (id: string, patch: Partial<Memo>) => Promise<void>
+  toggleDone: (id: string) => Promise<void>
+  removeMemo: (id: string) => Promise<void>
+  applySortOrders: (orders: { id: string; sortOrder: number }[]) => Promise<void>
+
+  addTemplate: (input: Omit<Template, 'id' | 'createdAt' | 'updatedAt' | 'sortOrder' | 'builtin'>) => Promise<Template>
+  updateTemplate: (id: string, patch: Partial<Template>) => Promise<void>
+  removeTemplate: (id: string) => Promise<void>
+  duplicateTemplate: (id: string) => Promise<Template | null>
+  /** メモの構成をテンプレートとして保存する(要件7) */
+  templateFromMemo: (
+    source: { fields: MemoField[]; labels: string[] },
+    name: string,
+    keepValues: boolean
+  ) => Promise<Template>
+
+  addLabel: (name: string) => Promise<Label>
+  updateLabel: (id: string, patch: Partial<Label>) => Promise<void>
+  removeLabel: (id: string) => Promise<void>
+
+  saveComparison: (c: Omit<Comparison, 'id' | 'savedAt'>) => Promise<Comparison>
+  removeComparison: (id: string) => Promise<void>
+  addGoodNew: (text: string) => Promise<GoodNew>
+  updateGoodNew: (id: string, text: string) => Promise<void>
+  removeGoodNew: (id: string) => Promise<void>
+  addActivityLog: (text: string) => Promise<ActivityLog>
+  updateActivityLog: (id: string, text: string) => Promise<void>
+  removeActivityLog: (id: string) => Promise<void>
+
+  addProduct: (input: ProductInput) => Promise<Product>
+  updateProduct: (id: string, patch: Partial<ProductInput>) => Promise<void>
+  removeProduct: (id: string) => Promise<void>
+  addPriceRecord: (productId: string, input: PriceRecordInput) => Promise<PriceRecord>
+  updatePriceRecord: (id: string, patch: Partial<PriceRecordInput>) => Promise<void>
+  removePriceRecord: (id: string) => Promise<void>
+
+  setArchiveDays: (days: number) => Promise<void>
+  markExported: () => Promise<void>
+  importReplace: (data: db.DataSet) => Promise<void>
+  importMerge: (data: db.DataSet) => Promise<void>
+  eraseAll: () => Promise<void>
+}
 
 // setState に渡す更新関数はその場で実行される保証がないため、更新関数の中で外側の
 // 変数に代入して永続化しようとすると書き込みが飛ぶことがある。永続化する値は
@@ -117,8 +120,9 @@ function useLatest<T>(value: T) {
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false)
   const [memos, setMemos] = useState<Memo[]>([])
+  const [templates, setTemplates] = useState<Template[]>([])
+  const [labels, setLabels] = useState<Label[]>(DEFAULT_LABELS)
   const [comparisons, setComparisons] = useState<Comparison[]>([])
-  const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES)
   const [goodNews, setGoodNews] = useState<GoodNew[]>([])
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([])
   const [products, setProducts] = useState<Product[]>([])
@@ -127,6 +131,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [lastExportAt, setLastExportAt] = useState<number | null>(null)
 
   const memosRef = useLatest(memos)
+  const templatesRef = useLatest(templates)
+  const labelsRef = useLatest(labels)
   const goodNewsRef = useLatest(goodNews)
   const activityLogsRef = useLatest(activityLogs)
   const productsRef = useLatest(products)
@@ -141,40 +147,51 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       } catch {
         // 非対応環境では無視
       }
-      let cats = await db.getAllCategories()
-      if (cats.length === 0) {
-        await db.putCategories(DEFAULT_CATEGORIES)
-        cats = DEFAULT_CATEGORIES
+
+      let labs = await db.labels.getAll()
+      if (labs.length === 0) {
+        await db.labels.putMany(DEFAULT_LABELS)
+        labs = DEFAULT_LABELS
       }
+      let tpls = await db.templates.getAll()
+      if (tpls.length === 0) {
+        tpls = buildDefaultTemplates()
+        await db.templates.putMany(tpls)
+      }
+
       const days = (await db.getMeta<number>('archiveDays')) ?? DEFAULT_ARCHIVE_DAYS
       const exported = (await db.getMeta<number>('lastExportAt')) ?? null
-      let all = await db.getAllMemos()
+      let all = await db.memos.getAll()
 
       // 完了済みメモの自動アーカイブ(既定30日・設定可)
       if (days > 0) {
         const cutoff = Date.now() - days * 86_400_000
-        const toArchive = all.filter((m) => m.done && !m.archived && (m.doneAt ?? m.updatedAt) < cutoff)
+        const toArchive = all.filter(
+          (m) => m.done && !m.archived && (m.doneAt ?? m.updatedAt) < cutoff
+        )
         if (toArchive.length > 0) {
           const archived = toArchive.map((m) => ({ ...m, archived: true }))
-          await db.putMemos(archived)
+          await db.memos.putMany(archived)
           const ids = new Set(archived.map((m) => m.id))
           all = all.map((m) => (ids.has(m.id) ? { ...m, archived: true } : m))
         }
       }
-      const comps = await db.getAllComparisons()
-      const gn = await db.getAllGoodNews()
-      const al = await db.getAllActivityLogs()
-      const prods = await db.getAllProducts()
-      const recs = await db.getAllPriceRecords()
+
+      const comps = await db.comparisons.getAll()
+      const gn = await db.goodNews.getAll()
+      const al = await db.activityLogs.getAll()
+      const prods = await db.products.getAll()
+      const recs = await db.priceRecords.getAll()
       if (cancelled) return
-      setCategories(sortCategories(cats))
+      setLabels(sortLabels(labs))
+      setTemplates(sortTemplates(tpls))
       setArchiveDaysState(days)
       setLastExportAt(exported)
       setMemos(all)
       setComparisons(comps.sort((a, b) => b.savedAt - a.savedAt))
       setGoodNews(gn.sort((a, b) => b.createdAt - a.createdAt))
       setActivityLogs(al.sort((a, b) => b.createdAt - a.createdAt))
-      setProducts(prods.sort((a, b) => b.createdAt - a.createdAt))
+      setProducts(prods.sort((a, b) => b.updatedAt - a.updatedAt))
       setPriceRecords(recs)
       setReady(true)
     })()
@@ -183,22 +200,32 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const addMemo = useCallback(async (input: MemoInput) => {
+  // --- メモ -----------------------------------------------------------------
+
+  const draftFromTemplate = useCallback(
+    (t: Template): MemoDraft => ({
+      templateId: t.id,
+      templateName: t.name,
+      title: '',
+      labels: [...t.defaultLabels],
+      // テンプレートの定義を複製する。以降このメモはテンプレートから独立する
+      fields: t.fields.map(instantiate),
+      priority: 'normal'
+    }),
+    []
+  )
+
+  const addMemo = useCallback(async (draft: MemoDraft) => {
     const now = Date.now()
     const memo: Memo = {
+      ...draft,
       id: uid(),
-      title: input.title,
-      category: input.category,
-      tags: input.tags,
-      priority: input.priority,
-      note: input.note || undefined,
-      source: input.source || undefined,
       done: false,
       createdAt: now,
       updatedAt: now,
       sortOrder: now
     }
-    await db.putMemo(memo)
+    await db.memos.put(memo)
     setMemos((prev) => [...prev, memo])
     return memo
   }, [])
@@ -208,21 +235,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!current) return
     const next: Memo = { ...current, ...patch, updatedAt: Date.now() }
     setMemos((prev) => prev.map((m) => (m.id === id ? next : m)))
-    await db.putMemo(next)
+    await db.memos.put(next)
   }, [])
 
   const toggleDone = useCallback(async (id: string) => {
     const current = memosRef.current.find((m) => m.id === id)
     if (!current) return
     const done = !current.done
-    const next: Memo = { ...current, done, doneAt: done ? Date.now() : undefined, updatedAt: Date.now() }
+    const next: Memo = {
+      ...current,
+      done,
+      doneAt: done ? Date.now() : undefined,
+      updatedAt: Date.now()
+    }
     setMemos((prev) => prev.map((m) => (m.id === id ? next : m)))
-    await db.putMemo(next)
+    await db.memos.put(next)
   }, [])
 
   const removeMemo = useCallback(async (id: string) => {
     setMemos((prev) => prev.filter((m) => m.id !== id))
-    await db.deleteMemo(id)
+    await db.memos.remove(id)
   }, [])
 
   const applySortOrders = useCallback(async (orders: { id: string; sortOrder: number }[]) => {
@@ -236,37 +268,149 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (changed.length === 0) return
     const byId = new Map(changed.map((m) => [m.id, m]))
     setMemos((prev) => prev.map((m) => byId.get(m.id) ?? m))
-    await db.putMemos(changed)
+    await db.memos.putMany(changed)
   }, [])
 
-  const addCategory = useCallback(async (label: string) => {
-    const cat: Category = { id: `custom-${uid()}`, label, builtin: false }
-    await db.putCategory(cat)
-    setCategories((prev) => sortCategories([...prev, cat]))
-    return cat
+  // --- テンプレート ---------------------------------------------------------
+
+  const addTemplate = useCallback<Store['addTemplate']>(async (input) => {
+    const now = Date.now()
+    const t: Template = {
+      ...input,
+      id: uid(),
+      builtin: false,
+      createdAt: now,
+      updatedAt: now,
+      sortOrder: now
+    }
+    await db.templates.put(t)
+    setTemplates((prev) => sortTemplates([...prev, t]))
+    return t
   }, [])
 
-  const removeCategory = useCallback(async (id: string) => {
-    setCategories((prev) => prev.filter((c) => c.id !== id))
-    await db.deleteCategory(id)
+  const updateTemplate = useCallback(async (id: string, patch: Partial<Template>) => {
+    const current = templatesRef.current.find((t) => t.id === id)
+    if (!current) return
+    const next: Template = { ...current, ...patch, updatedAt: Date.now() }
+    setTemplates((prev) => sortTemplates(prev.map((t) => (t.id === id ? next : t))))
+    await db.templates.put(next)
   }, [])
+
+  const removeTemplate = useCallback(async (id: string) => {
+    setTemplates((prev) => prev.filter((t) => t.id !== id))
+    await db.templates.remove(id)
+    // メモはスキーマを複製済みなので、テンプレートを消しても壊れない。
+    // templateId だけ切って由来を外す(templateName は表示のため残す)
+    const orphans = memosRef.current
+      .filter((m) => m.templateId === id)
+      .map((m) => ({ ...m, templateId: null }))
+    if (orphans.length === 0) return
+    const byId = new Map(orphans.map((m) => [m.id, m]))
+    setMemos((prev) => prev.map((m) => byId.get(m.id) ?? m))
+    await db.memos.putMany(orphans)
+  }, [])
+
+  const duplicateTemplate = useCallback(
+    async (id: string) => {
+      const source = templatesRef.current.find((t) => t.id === id)
+      if (!source) return null
+      const now = Date.now()
+      const copy: Template = {
+        ...source,
+        id: uid(),
+        name: `${source.name} のコピー`,
+        // 項目のIDも振り直して、元テンプレートから独立させる
+        fields: source.fields.map((f) => ({ ...f, id: uid() })),
+        builtin: false,
+        createdAt: now,
+        updatedAt: now,
+        sortOrder: now
+      }
+      await db.templates.put(copy)
+      setTemplates((prev) => sortTemplates([...prev, copy]))
+      return copy
+    },
+    []
+  )
+
+  const templateFromMemo = useCallback<Store['templateFromMemo']>(
+    async (source, name, keepValues) => {
+      const now = Date.now()
+      const t: Template = {
+        id: uid(),
+        name,
+        emoji: '📝',
+        fields: source.fields.map((f) => toTemplateField(f, keepValues)),
+        defaultLabels: [...source.labels],
+        builtin: false,
+        createdAt: now,
+        updatedAt: now,
+        sortOrder: now
+      }
+      await db.templates.put(t)
+      setTemplates((prev) => sortTemplates([...prev, t]))
+      return t
+    },
+    []
+  )
+
+  // --- ラベル ---------------------------------------------------------------
+
+  const addLabel = useCallback(async (name: string) => {
+    const label: Label = { id: uid(), name, sortOrder: Date.now() }
+    await db.labels.put(label)
+    setLabels((prev) => sortLabels([...prev, label]))
+    return label
+  }, [])
+
+  const updateLabel = useCallback(async (id: string, patch: Partial<Label>) => {
+    const current = labelsRef.current.find((l) => l.id === id)
+    if (!current) return
+    const next: Label = { ...current, ...patch }
+    setLabels((prev) => sortLabels(prev.map((l) => (l.id === id ? next : l))))
+    await db.labels.put(next)
+  }, [])
+
+  const removeLabel = useCallback(async (id: string) => {
+    setLabels((prev) => prev.filter((l) => l.id !== id))
+    await db.labels.remove(id)
+    // メモとテンプレートに残った参照も外す
+    const memoFix = memosRef.current
+      .filter((m) => m.labels.includes(id))
+      .map((m) => ({ ...m, labels: m.labels.filter((x) => x !== id) }))
+    if (memoFix.length > 0) {
+      const byId = new Map(memoFix.map((m) => [m.id, m]))
+      setMemos((prev) => prev.map((m) => byId.get(m.id) ?? m))
+      await db.memos.putMany(memoFix)
+    }
+    const tplFix = templatesRef.current
+      .filter((t) => t.defaultLabels.includes(id))
+      .map((t) => ({ ...t, defaultLabels: t.defaultLabels.filter((x) => x !== id) }))
+    if (tplFix.length > 0) {
+      const byId = new Map(tplFix.map((t) => [t.id, t]))
+      setTemplates((prev) => prev.map((t) => byId.get(t.id) ?? t))
+      await db.templates.putMany(tplFix)
+    }
+  }, [])
+
+  // --- 単価計算・日次ログ(変更なし)----------------------------------------
 
   const saveComparison = useCallback(async (c: Omit<Comparison, 'id' | 'savedAt'>) => {
     const comp: Comparison = { ...c, id: uid(), savedAt: Date.now() }
-    await db.putComparison(comp)
+    await db.comparisons.put(comp)
     setComparisons((prev) => [comp, ...prev])
     return comp
   }, [])
 
   const removeComparison = useCallback(async (id: string) => {
     setComparisons((prev) => prev.filter((c) => c.id !== id))
-    await db.deleteComparison(id)
+    await db.comparisons.remove(id)
   }, [])
 
   const addGoodNew = useCallback(async (text: string) => {
     const now = Date.now()
     const entry: GoodNew = { id: uid(), text, createdAt: now, updatedAt: now }
-    await db.putGoodNew(entry)
+    await db.goodNews.put(entry)
     setGoodNews((prev) => [entry, ...prev])
     return entry
   }, [])
@@ -276,18 +420,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!current) return
     const next: GoodNew = { ...current, text, updatedAt: Date.now() }
     setGoodNews((prev) => prev.map((g) => (g.id === id ? next : g)))
-    await db.putGoodNew(next)
+    await db.goodNews.put(next)
   }, [])
 
   const removeGoodNew = useCallback(async (id: string) => {
     setGoodNews((prev) => prev.filter((g) => g.id !== id))
-    await db.deleteGoodNew(id)
+    await db.goodNews.remove(id)
   }, [])
 
   const addActivityLog = useCallback(async (text: string) => {
     const now = Date.now()
     const entry: ActivityLog = { id: uid(), text, createdAt: now, updatedAt: now }
-    await db.putActivityLog(entry)
+    await db.activityLogs.put(entry)
     setActivityLogs((prev) => [entry, ...prev])
     return entry
   }, [])
@@ -297,13 +441,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!current) return
     const next: ActivityLog = { ...current, text, updatedAt: Date.now() }
     setActivityLogs((prev) => prev.map((a) => (a.id === id ? next : a)))
-    await db.putActivityLog(next)
+    await db.activityLogs.put(next)
   }, [])
 
   const removeActivityLog = useCallback(async (id: string) => {
     setActivityLogs((prev) => prev.filter((a) => a.id !== id))
-    await db.deleteActivityLog(id)
+    await db.activityLogs.remove(id)
   }, [])
+
+  // --- 価格記録 -------------------------------------------------------------
 
   const addProduct = useCallback(async (input: ProductInput) => {
     const now = Date.now()
@@ -315,7 +461,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       createdAt: now,
       updatedAt: now
     }
-    await db.putProduct(product)
+    await db.products.put(product)
     setProducts((prev) => [product, ...prev])
     return product
   }, [])
@@ -325,13 +471,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!current) return
     const next: Product = { ...current, ...patch, updatedAt: Date.now() }
     setProducts((prev) => prev.map((p) => (p.id === id ? next : p)))
-    await db.putProduct(next)
+    await db.products.put(next)
   }, [])
 
   const removeProduct = useCallback(async (id: string) => {
     setProducts((prev) => prev.filter((p) => p.id !== id))
     setPriceRecords((prev) => prev.filter((r) => r.productId !== id))
-    await db.deleteProduct(id)
+    await db.products.remove(id)
     await db.deletePriceRecordsByProduct(id)
   }, [])
 
@@ -351,7 +497,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       createdAt: now,
       updatedAt: now
     }
-    await db.putPriceRecord(record)
+    await db.priceRecords.put(record)
     setPriceRecords((prev) => [...prev, record])
     return record
   }, [])
@@ -361,13 +507,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!current) return
     const next: PriceRecord = { ...current, ...patch, updatedAt: Date.now() }
     setPriceRecords((prev) => prev.map((r) => (r.id === id ? next : r)))
-    await db.putPriceRecord(next)
+    await db.priceRecords.put(next)
   }, [])
 
   const removePriceRecord = useCallback(async (id: string) => {
     setPriceRecords((prev) => prev.filter((r) => r.id !== id))
-    await db.deletePriceRecord(id)
+    await db.priceRecords.remove(id)
   }, [])
+
+  // --- 設定・バックアップ ---------------------------------------------------
 
   const setArchiveDays = useCallback(async (days: number) => {
     setArchiveDaysState(days)
@@ -380,70 +528,59 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     await db.setMeta('lastExportAt', now)
   }, [])
 
+  const applyData = useCallback((d: db.DataSet) => {
+    setMemos(d.memos)
+    setTemplates(sortTemplates(d.templates))
+    setLabels(sortLabels(d.labels))
+    setComparisons([...d.comparisons].sort((a, b) => b.savedAt - a.savedAt))
+    setGoodNews([...d.goodNews].sort((a, b) => b.createdAt - a.createdAt))
+    setActivityLogs([...d.activityLogs].sort((a, b) => b.createdAt - a.createdAt))
+    setProducts([...d.products].sort((a, b) => b.updatedAt - a.updatedAt))
+    setPriceRecords(d.priceRecords)
+  }, [])
+
   const importReplace = useCallback(
-    async (
-      m: Memo[],
-      c: Comparison[],
-      cats: Category[],
-      gn: GoodNew[],
-      al: ActivityLog[],
-      prods: Product[],
-      recs: PriceRecord[]
-    ) => {
-      const nextCats = cats.length > 0 ? cats : DEFAULT_CATEGORIES
-      await db.replaceAllData(m, c, nextCats, gn, al, prods, recs)
-      setMemos(m)
-      setComparisons([...c].sort((a, b) => b.savedAt - a.savedAt))
-      setCategories(sortCategories(nextCats))
-      setGoodNews([...gn].sort((a, b) => b.createdAt - a.createdAt))
-      setActivityLogs([...al].sort((a, b) => b.createdAt - a.createdAt))
-      setProducts([...prods].sort((a, b) => b.createdAt - a.createdAt))
-      setPriceRecords(recs)
+    async (data: db.DataSet) => {
+      // テンプレートとラベルが空のバックアップで既定を失わないようにする
+      const next: db.DataSet = {
+        ...data,
+        templates: data.templates.length > 0 ? data.templates : buildDefaultTemplates(),
+        labels: data.labels.length > 0 ? data.labels : DEFAULT_LABELS
+      }
+      await db.replaceAllData(next)
+      applyData(next)
     },
-    []
+    [applyData]
   )
 
-  const importMerge = useCallback(
-    async (
-      m: Memo[],
-      c: Comparison[],
-      cats: Category[],
-      gn: GoodNew[],
-      al: ActivityLog[],
-      prods: Product[],
-      recs: PriceRecord[]
-    ) => {
-      await Promise.all([
-        db.putMemos(m),
-        db.putComparisons(c),
-        db.putCategories(cats),
-        db.putGoodNews(gn),
-        db.putActivityLogs(al),
-        db.putProducts(prods),
-        db.putPriceRecords(recs)
-      ])
-      const mergeById = <T extends { id: string }>(prev: T[], add: T[]) => {
-        const map = new Map(prev.map((x) => [x.id, x]))
-        for (const x of add) map.set(x.id, x)
-        return [...map.values()]
-      }
-      setMemos((prev) => mergeById(prev, m))
-      setComparisons((prev) => mergeById(prev, c).sort((a, b) => b.savedAt - a.savedAt))
-      setCategories((prev) => sortCategories(mergeById(prev, cats)))
-      setGoodNews((prev) => mergeById(prev, gn).sort((a, b) => b.createdAt - a.createdAt))
-      setActivityLogs((prev) => mergeById(prev, al).sort((a, b) => b.createdAt - a.createdAt))
-      setProducts((prev) => mergeById(prev, prods).sort((a, b) => b.createdAt - a.createdAt))
-      setPriceRecords((prev) => mergeById(prev, recs))
-    },
-    []
-  )
+  const importMerge = useCallback(async (data: db.DataSet) => {
+    await db.mergeAllData(data)
+    const mergeById = <T extends { id: string }>(prev: T[], add: T[]) => {
+      const map = new Map(prev.map((x) => [x.id, x]))
+      for (const x of add) map.set(x.id, x)
+      return [...map.values()]
+    }
+    setMemos((prev) => mergeById(prev, data.memos))
+    setTemplates((prev) => sortTemplates(mergeById(prev, data.templates)))
+    setLabels((prev) => sortLabels(mergeById(prev, data.labels)))
+    setComparisons((prev) => mergeById(prev, data.comparisons).sort((a, b) => b.savedAt - a.savedAt))
+    setGoodNews((prev) => mergeById(prev, data.goodNews).sort((a, b) => b.createdAt - a.createdAt))
+    setActivityLogs((prev) =>
+      mergeById(prev, data.activityLogs).sort((a, b) => b.createdAt - a.createdAt)
+    )
+    setProducts((prev) => mergeById(prev, data.products).sort((a, b) => b.updatedAt - a.updatedAt))
+    setPriceRecords((prev) => mergeById(prev, data.priceRecords))
+  }, [])
 
   const eraseAll = useCallback(async () => {
     await db.clearAllData()
-    await db.putCategories(DEFAULT_CATEGORIES)
+    const tpls = buildDefaultTemplates()
+    await db.labels.putMany(DEFAULT_LABELS)
+    await db.templates.putMany(tpls)
     setMemos([])
+    setTemplates(sortTemplates(tpls))
+    setLabels(DEFAULT_LABELS)
     setComparisons([])
-    setCategories(DEFAULT_CATEGORIES)
     setGoodNews([])
     setActivityLogs([])
     setProducts([])
@@ -456,8 +593,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     () => ({
       ready,
       memos,
+      templates,
+      labels,
       comparisons,
-      categories,
       goodNews,
       activityLogs,
       products,
@@ -465,12 +603,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       archiveDays,
       lastExportAt,
       addMemo,
+      draftFromTemplate,
       updateMemo,
       toggleDone,
       removeMemo,
       applySortOrders,
-      addCategory,
-      removeCategory,
+      addTemplate,
+      updateTemplate,
+      removeTemplate,
+      duplicateTemplate,
+      templateFromMemo,
+      addLabel,
+      updateLabel,
+      removeLabel,
       saveComparison,
       removeComparison,
       addGoodNew,
@@ -492,12 +637,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       eraseAll
     }),
     [
-      ready, memos, comparisons, categories, goodNews, activityLogs, products, priceRecords, archiveDays, lastExportAt,
-      addMemo, updateMemo, toggleDone, removeMemo, applySortOrders,
-      addCategory, removeCategory, saveComparison, removeComparison,
+      ready, memos, templates, labels, comparisons, goodNews, activityLogs,
+      products, priceRecords, archiveDays, lastExportAt,
+      addMemo, draftFromTemplate, updateMemo, toggleDone, removeMemo, applySortOrders,
+      addTemplate, updateTemplate, removeTemplate, duplicateTemplate, templateFromMemo,
+      addLabel, updateLabel, removeLabel,
+      saveComparison, removeComparison,
       addGoodNew, updateGoodNew, removeGoodNew,
       addActivityLog, updateActivityLog, removeActivityLog,
-      addProduct, updateProduct, removeProduct, addPriceRecord, updatePriceRecord, removePriceRecord,
+      addProduct, updateProduct, removeProduct,
+      addPriceRecord, updatePriceRecord, removePriceRecord,
       setArchiveDays, markExported, importReplace, importMerge, eraseAll
     ]
   )
@@ -505,36 +654,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>
 }
 
-// 既定カテゴリの定義順を保ちつつ、カスタムを後ろに並べる
-function sortCategories(cats: Category[]): Category[] {
-  const order = new Map(DEFAULT_CATEGORIES.map((c, i) => [c.id, i]))
-  return [...cats].sort((a, b) => {
-    const ai = order.get(a.id) ?? 100
-    const bi = order.get(b.id) ?? 100
-    if (ai !== bi) return ai - bi
-    return a.label.localeCompare(b.label, 'ja')
-  })
+function sortLabels(list: Label[]): Label[] {
+  return [...list].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, 'ja'))
 }
 
-export function useStore(): Store {
-  const s = useContext(StoreContext)
-  if (!s) throw new Error('useStore must be used within StoreProvider')
-  return s
+function sortTemplates(list: Template[]): Template[] {
+  return [...list].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, 'ja'))
 }
 
 // 90日経過などの条件でバックアップのリマインドを表示(仕様書6章)
 export function needsBackupReminder(
-  store: Pick<
-    Store,
-    'lastExportAt' | 'memos' | 'comparisons' | 'goodNews' | 'activityLogs' | 'priceRecords'
-  >
+  store: Pick<Store, 'lastExportAt' | 'memos' | 'comparisons' | 'goodNews' | 'activityLogs'>
 ) {
   const hasData =
     store.memos.length > 0 ||
     store.comparisons.length > 0 ||
     store.goodNews.length > 0 ||
-    store.activityLogs.length > 0 ||
-    store.priceRecords.length > 0
+    store.activityLogs.length > 0
   if (!hasData) return false
   if (store.lastExportAt == null) return true
   return Date.now() - store.lastExportAt > EXPORT_REMIND_DAYS * 86_400_000

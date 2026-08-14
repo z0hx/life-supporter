@@ -1,40 +1,41 @@
-import type { ActivityLog, Category, Comparison, GoodNew, Memo, PriceRecord, Product } from '../types'
+import type {
+  ActivityLog,
+  Comparison,
+  GoodNew,
+  Label,
+  Memo,
+  PriceRecord,
+  Product,
+  Template
+} from '../types'
 
-export const SCHEMA_VERSION = 4
+// v4 = 価格記録の追加
+// v5 = メモをテンプレート式に刷新。v4 以前のバックアップはメモの構造が
+//      根本的に異なるため復元できない(それ以外のデータは取り込む)
+export const SCHEMA_VERSION = 5
 
 export interface BackupFile {
   app: 'life-supporter'
   schemaVersion: number
   exportedAt: string
   memos: Memo[]
+  templates: Template[]
+  labels: Label[]
   comparisons: Comparison[]
-  categories: Category[]
   goodNews: GoodNew[]
   activityLogs: ActivityLog[]
   products: Product[]
   priceRecords: PriceRecord[]
 }
 
-export function buildBackup(
-  memos: Memo[],
-  comparisons: Comparison[],
-  categories: Category[],
-  goodNews: GoodNew[],
-  activityLogs: ActivityLog[],
-  products: Product[],
-  priceRecords: PriceRecord[]
-): BackupFile {
+export type BackupData = Omit<BackupFile, 'app' | 'schemaVersion' | 'exportedAt'>
+
+export function buildBackup(data: BackupData): BackupFile {
   return {
     app: 'life-supporter',
     schemaVersion: SCHEMA_VERSION,
     exportedAt: new Date().toISOString(),
-    memos,
-    comparisons,
-    categories,
-    goodNews,
-    activityLogs,
-    products,
-    priceRecords
+    ...data
   }
 }
 
@@ -44,7 +45,7 @@ export function backupFileName(now = new Date()) {
 }
 
 export type BackupValidation =
-  | { ok: true; data: BackupFile }
+  | { ok: true; data: BackupFile; warning?: string }
   | { ok: false; error: string }
 
 export function validateBackup(text: string): BackupValidation {
@@ -64,16 +65,29 @@ export function validateBackup(text: string): BackupValidation {
       error: `未対応のスキーマバージョンです(v${d.schemaVersion})。アプリを更新してください。`
     }
   }
-  if (!Array.isArray(d.memos) || !Array.isArray(d.comparisons) || !Array.isArray(d.categories)) {
+  if (!Array.isArray(d.comparisons)) {
     return { ok: false, error: 'ファイルの内容が不完全です。' }
   }
-  // 旧バックアップに存在しないストアは空配列に正規化
-  // (v1: goodNews 無し / v1・v2: activityLogs 無し / v1〜v3: products・priceRecords 無し)
+
+  // 旧バックアップに存在しないストアは空配列に正規化する(この方針は v1 から一貫)
+  // v1: goodNews 無し / v1・v2: activityLogs 無し / v1〜v3: products・priceRecords 無し
+  let warning: string | undefined
+  if (d.schemaVersion < SCHEMA_VERSION) {
+    // v4 以前のメモは構造が違うので取り込まない。他のデータは活かす
+    const droppedMemos = Array.isArray(d.memos) ? d.memos.length : 0
+    if (droppedMemos > 0) {
+      warning = `旧形式のメモ${droppedMemos}件は、テンプレート式への刷新により復元できませんでした。価格記録・単価計算・日次ログは取り込みました。`
+    }
+    d.memos = []
+  }
+  if (!Array.isArray(d.memos)) d.memos = []
+  if (!Array.isArray(d.templates)) d.templates = []
+  if (!Array.isArray(d.labels)) d.labels = []
   if (!Array.isArray(d.goodNews)) d.goodNews = []
   if (!Array.isArray(d.activityLogs)) d.activityLogs = []
   if (!Array.isArray(d.products)) d.products = []
   if (!Array.isArray(d.priceRecords)) d.priceRecords = []
-  return { ok: true, data: d as BackupFile }
+  return { ok: true, data: d as BackupFile, warning }
 }
 
 // Web Share API で共有シートへ。非対応時はダウンロードにフォールバック
