@@ -1,8 +1,18 @@
-import type { ActivityLog, Comparison, GoodNew, Label, Memo, Template } from '../types'
+import type {
+  ActivityLog,
+  Comparison,
+  GoodNew,
+  Label,
+  Memo,
+  PriceRecord,
+  Product,
+  Template
+} from '../types'
 
-// v4 でメモをテンプレート式に刷新した。v3 以前のバックアップはメモの構造が
-// 根本的に異なるため復元できない(単価計算・日次ログのみ取り込む)
-export const SCHEMA_VERSION = 4
+// v4 = 価格記録の追加
+// v5 = メモをテンプレート式に刷新。v4 以前のバックアップはメモの構造が
+//      根本的に異なるため復元できない(それ以外のデータは取り込む)
+export const SCHEMA_VERSION = 5
 
 export interface BackupFile {
   app: 'life-supporter'
@@ -14,6 +24,8 @@ export interface BackupFile {
   comparisons: Comparison[]
   goodNews: GoodNew[]
   activityLogs: ActivityLog[]
+  products: Product[]
+  priceRecords: PriceRecord[]
 }
 
 export type BackupData = Omit<BackupFile, 'app' | 'schemaVersion' | 'exportedAt'>
@@ -58,12 +70,13 @@ export function validateBackup(text: string): BackupValidation {
   }
 
   // 旧バックアップに存在しないストアは空配列に正規化する(この方針は v1 から一貫)
+  // v1: goodNews 無し / v1・v2: activityLogs 無し / v1〜v3: products・priceRecords 無し
   let warning: string | undefined
   if (d.schemaVersion < SCHEMA_VERSION) {
-    // v3 以前のメモは構造が違うので取り込まない。他のデータは活かす
+    // v4 以前のメモは構造が違うので取り込まない。他のデータは活かす
     const droppedMemos = Array.isArray(d.memos) ? d.memos.length : 0
     if (droppedMemos > 0) {
-      warning = `旧形式のメモ${droppedMemos}件は、テンプレート式への刷新により復元できませんでした。単価計算と日次ログは取り込みました。`
+      warning = `旧形式のメモ${droppedMemos}件は、テンプレート式への刷新により復元できませんでした。価格記録・単価計算・日次ログは取り込みました。`
     }
     d.memos = []
   }
@@ -72,6 +85,8 @@ export function validateBackup(text: string): BackupValidation {
   if (!Array.isArray(d.labels)) d.labels = []
   if (!Array.isArray(d.goodNews)) d.goodNews = []
   if (!Array.isArray(d.activityLogs)) d.activityLogs = []
+  if (!Array.isArray(d.products)) d.products = []
+  if (!Array.isArray(d.priceRecords)) d.priceRecords = []
   return { ok: true, data: d as BackupFile, warning }
 }
 

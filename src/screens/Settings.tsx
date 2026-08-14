@@ -15,7 +15,7 @@ const ARCHIVE_OPTIONS = [
 ] as const
 
 function counts(d: DataSet) {
-  return `メモ ${d.memos.length}件 / テンプレート ${d.templates.length}件 / ラベル ${d.labels.length}件 / 比較履歴 ${d.comparisons.length}件 / Good & New ${d.goodNews.length}件 / 行動記録 ${d.activityLogs.length}件`
+  return `メモ ${d.memos.length}件 / テンプレート ${d.templates.length}件 / ラベル ${d.labels.length}件 / 比較履歴 ${d.comparisons.length}件 / Good & New ${d.goodNews.length}件 / 行動記録 ${d.activityLogs.length}件 / 商品 ${d.products.length}件 / 価格記録 ${d.priceRecords.length}件`
 }
 
 export function Settings({ navigate }: { navigate: (r: string) => void }) {
@@ -34,7 +34,9 @@ export function Settings({ navigate }: { navigate: (r: string) => void }) {
     labels: store.labels,
     comparisons: store.comparisons,
     goodNews: store.goodNews,
-    activityLogs: store.activityLogs
+    activityLogs: store.activityLogs,
+    products: store.products,
+    priceRecords: store.priceRecords
   })
 
   const doExport = async () => {
@@ -70,7 +72,9 @@ export function Settings({ navigate }: { navigate: (r: string) => void }) {
       labels: d.labels,
       comparisons: d.comparisons,
       goodNews: d.goodNews,
-      activityLogs: d.activityLogs
+      activityLogs: d.activityLogs,
+      products: d.products,
+      priceRecords: d.priceRecords
     }
     if (mode === 'replace') {
       await store.importReplace(data)
@@ -265,7 +269,7 @@ export function Settings({ navigate }: { navigate: (r: string) => void }) {
       {confirmErase && (
         <Dialog
           title="すべてのデータを削除"
-          message="メモ・テンプレート・ラベル・比較履歴・Good & New・行動記録 をすべて削除します。この操作は取り消せません。"
+          message="メモ・テンプレート・ラベル・比較履歴・Good & New・行動記録・商品と価格記録 をすべて削除します。この操作は取り消せません。"
           onClose={() => setConfirmErase(false)}
           actions={[
             {

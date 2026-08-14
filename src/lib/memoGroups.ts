@@ -44,7 +44,7 @@ export function buildGroups(
   templates: Template[],
   vs: ViewSettings
 ): MemoGroup[] {
-  const visible = memos.filter((m) => !m.archived)
+  const visible = memos.filter((m) => !m.archived && (vs.showDone || !m.done))
   const sort = (list: Memo[]) => [...list].sort((a, b) => compareMemos(a, b, vs))
 
   if (vs.groupBy === 'none') {

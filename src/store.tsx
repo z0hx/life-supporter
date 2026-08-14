@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type {
   ActivityLog,
   Comparison,
@@ -6,7 +6,10 @@ import type {
   Label,
   Memo,
   MemoField,
+  PriceRecord,
   Priority,
+  Product,
+  TaxMode,
   Template
 } from './types'
 import * as db from './lib/db'
@@ -19,6 +22,23 @@ export { useStore }
 
 const DEFAULT_ARCHIVE_DAYS = 30
 const EXPORT_REMIND_DAYS = 90
+
+export interface ProductInput {
+  name: string
+  unitMode: Product['unitMode']
+  memo?: string
+}
+
+export interface PriceRecordInput {
+  store: string
+  price: number
+  amount: number
+  quantity: number
+  taxMode: TaxMode
+  discountRate?: number
+  boughtAt: number
+  memo?: string
+}
 
 export interface MemoDraft {
   templateId: string | null
@@ -37,6 +57,8 @@ export interface Store {
   comparisons: Comparison[]
   goodNews: GoodNew[]
   activityLogs: ActivityLog[]
+  products: Product[]
+  priceRecords: PriceRecord[]
   archiveDays: number // 0 = 自動アーカイブしない
   lastExportAt: number | null
 
@@ -72,11 +94,27 @@ export interface Store {
   updateActivityLog: (id: string, text: string) => Promise<void>
   removeActivityLog: (id: string) => Promise<void>
 
+  addProduct: (input: ProductInput) => Promise<Product>
+  updateProduct: (id: string, patch: Partial<ProductInput>) => Promise<void>
+  removeProduct: (id: string) => Promise<void>
+  addPriceRecord: (productId: string, input: PriceRecordInput) => Promise<PriceRecord>
+  updatePriceRecord: (id: string, patch: Partial<PriceRecordInput>) => Promise<void>
+  removePriceRecord: (id: string) => Promise<void>
+
   setArchiveDays: (days: number) => Promise<void>
   markExported: () => Promise<void>
   importReplace: (data: db.DataSet) => Promise<void>
   importMerge: (data: db.DataSet) => Promise<void>
   eraseAll: () => Promise<void>
+}
+
+// setState に渡す更新関数はその場で実行される保証がないため、更新関数の中で外側の
+// 変数に代入して永続化しようとすると書き込みが飛ぶことがある。永続化する値は
+// 最新の state を保持する ref から組み立てる。
+function useLatest<T>(value: T) {
+  const ref = useRef(value)
+  ref.current = value
+  return ref
 }
 
 export function StoreProvider({ children }: { children: ReactNode }) {
@@ -87,8 +125,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [comparisons, setComparisons] = useState<Comparison[]>([])
   const [goodNews, setGoodNews] = useState<GoodNew[]>([])
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([])
+  const [products, setProducts] = useState<Product[]>([])
+  const [priceRecords, setPriceRecords] = useState<PriceRecord[]>([])
   const [archiveDays, setArchiveDaysState] = useState(DEFAULT_ARCHIVE_DAYS)
   const [lastExportAt, setLastExportAt] = useState<number | null>(null)
+
+  const memosRef = useLatest(memos)
+  const templatesRef = useLatest(templates)
+  const labelsRef = useLatest(labels)
+  const goodNewsRef = useLatest(goodNews)
+  const activityLogsRef = useLatest(activityLogs)
+  const productsRef = useLatest(products)
+  const priceRecordsRef = useLatest(priceRecords)
 
   useEffect(() => {
     let cancelled = false
@@ -132,6 +180,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const comps = await db.comparisons.getAll()
       const gn = await db.goodNews.getAll()
       const al = await db.activityLogs.getAll()
+      const prods = await db.products.getAll()
+      const recs = await db.priceRecords.getAll()
       if (cancelled) return
       setLabels(sortLabels(labs))
       setTemplates(sortTemplates(tpls))
@@ -141,6 +191,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setComparisons(comps.sort((a, b) => b.savedAt - a.savedAt))
       setGoodNews(gn.sort((a, b) => b.createdAt - a.createdAt))
       setActivityLogs(al.sort((a, b) => b.createdAt - a.createdAt))
+      setProducts(prods.sort((a, b) => b.updatedAt - a.updatedAt))
+      setPriceRecords(recs)
       setReady(true)
     })()
     return () => {
@@ -179,28 +231,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const updateMemo = useCallback(async (id: string, patch: Partial<Memo>) => {
-    let next: Memo | undefined
-    setMemos((prev) =>
-      prev.map((m) => {
-        if (m.id !== id) return m
-        next = { ...m, ...patch, updatedAt: Date.now() }
-        return next
-      })
-    )
-    if (next) await db.memos.put(next)
+    const current = memosRef.current.find((m) => m.id === id)
+    if (!current) return
+    const next: Memo = { ...current, ...patch, updatedAt: Date.now() }
+    setMemos((prev) => prev.map((m) => (m.id === id ? next : m)))
+    await db.memos.put(next)
   }, [])
 
   const toggleDone = useCallback(async (id: string) => {
-    let next: Memo | undefined
-    setMemos((prev) =>
-      prev.map((m) => {
-        if (m.id !== id) return m
-        const done = !m.done
-        next = { ...m, done, doneAt: done ? Date.now() : undefined, updatedAt: Date.now() }
-        return next
-      })
-    )
-    if (next) await db.memos.put(next)
+    const current = memosRef.current.find((m) => m.id === id)
+    if (!current) return
+    const done = !current.done
+    const next: Memo = {
+      ...current,
+      done,
+      doneAt: done ? Date.now() : undefined,
+      updatedAt: Date.now()
+    }
+    setMemos((prev) => prev.map((m) => (m.id === id ? next : m)))
+    await db.memos.put(next)
   }, [])
 
   const removeMemo = useCallback(async (id: string) => {
@@ -210,17 +259,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const applySortOrders = useCallback(async (orders: { id: string; sortOrder: number }[]) => {
     const map = new Map(orders.map((o) => [o.id, o.sortOrder]))
-    const changed: Memo[] = []
-    setMemos((prev) =>
-      prev.map((m) => {
+    const changed = memosRef.current
+      .filter((m) => {
         const so = map.get(m.id)
-        if (so === undefined || so === m.sortOrder) return m
-        const next = { ...m, sortOrder: so }
-        changed.push(next)
-        return next
+        return so !== undefined && so !== m.sortOrder
       })
-    )
-    if (changed.length > 0) await db.memos.putMany(changed)
+      .map((m) => ({ ...m, sortOrder: map.get(m.id)! }))
+    if (changed.length === 0) return
+    const byId = new Map(changed.map((m) => [m.id, m]))
+    setMemos((prev) => prev.map((m) => byId.get(m.id) ?? m))
+    await db.memos.putMany(changed)
   }, [])
 
   // --- テンプレート ---------------------------------------------------------
@@ -241,17 +289,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const updateTemplate = useCallback(async (id: string, patch: Partial<Template>) => {
-    let next: Template | undefined
-    setTemplates((prev) =>
-      sortTemplates(
-        prev.map((t) => {
-          if (t.id !== id) return t
-          next = { ...t, ...patch, updatedAt: Date.now() }
-          return next
-        })
-      )
-    )
-    if (next) await db.templates.put(next)
+    const current = templatesRef.current.find((t) => t.id === id)
+    if (!current) return
+    const next: Template = { ...current, ...patch, updatedAt: Date.now() }
+    setTemplates((prev) => sortTemplates(prev.map((t) => (t.id === id ? next : t))))
+    await db.templates.put(next)
   }, [])
 
   const removeTemplate = useCallback(async (id: string) => {
@@ -259,19 +301,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     await db.templates.remove(id)
     // メモはスキーマを複製済みなので、テンプレートを消しても壊れない。
     // templateId だけ切って由来を外す(templateName は表示のため残す)
-    setMemos((prev) => {
-      const orphans = prev.filter((m) => m.templateId === id)
-      if (orphans.length === 0) return prev
-      const updated = orphans.map((m) => ({ ...m, templateId: null }))
-      void db.memos.putMany(updated)
-      const byId = new Map(updated.map((m) => [m.id, m]))
-      return prev.map((m) => byId.get(m.id) ?? m)
-    })
+    const orphans = memosRef.current
+      .filter((m) => m.templateId === id)
+      .map((m) => ({ ...m, templateId: null }))
+    if (orphans.length === 0) return
+    const byId = new Map(orphans.map((m) => [m.id, m]))
+    setMemos((prev) => prev.map((m) => byId.get(m.id) ?? m))
+    await db.memos.putMany(orphans)
   }, [])
 
   const duplicateTemplate = useCallback(
     async (id: string) => {
-      const source = templates.find((t) => t.id === id)
+      const source = templatesRef.current.find((t) => t.id === id)
       if (!source) return null
       const now = Date.now()
       const copy: Template = {
@@ -289,7 +330,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setTemplates((prev) => sortTemplates([...prev, copy]))
       return copy
     },
-    [templates]
+    []
   )
 
   const templateFromMemo = useCallback<Store['templateFromMemo']>(
@@ -323,42 +364,33 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const updateLabel = useCallback(async (id: string, patch: Partial<Label>) => {
-    let next: Label | undefined
-    setLabels((prev) =>
-      sortLabels(
-        prev.map((l) => {
-          if (l.id !== id) return l
-          next = { ...l, ...patch }
-          return next
-        })
-      )
-    )
-    if (next) await db.labels.put(next)
+    const current = labelsRef.current.find((l) => l.id === id)
+    if (!current) return
+    const next: Label = { ...current, ...patch }
+    setLabels((prev) => sortLabels(prev.map((l) => (l.id === id ? next : l))))
+    await db.labels.put(next)
   }, [])
 
   const removeLabel = useCallback(async (id: string) => {
     setLabels((prev) => prev.filter((l) => l.id !== id))
     await db.labels.remove(id)
-    // メモに残った参照も外す
-    setMemos((prev) => {
-      const affected = prev.filter((m) => m.labels.includes(id))
-      if (affected.length === 0) return prev
-      const updated = affected.map((m) => ({ ...m, labels: m.labels.filter((x) => x !== id) }))
-      void db.memos.putMany(updated)
-      const byId = new Map(updated.map((m) => [m.id, m]))
-      return prev.map((m) => byId.get(m.id) ?? m)
-    })
-    setTemplates((prev) => {
-      const affected = prev.filter((t) => t.defaultLabels.includes(id))
-      if (affected.length === 0) return prev
-      const updated = affected.map((t) => ({
-        ...t,
-        defaultLabels: t.defaultLabels.filter((x) => x !== id)
-      }))
-      void db.templates.putMany(updated)
-      const byId = new Map(updated.map((t) => [t.id, t]))
-      return prev.map((t) => byId.get(t.id) ?? t)
-    })
+    // メモとテンプレートに残った参照も外す
+    const memoFix = memosRef.current
+      .filter((m) => m.labels.includes(id))
+      .map((m) => ({ ...m, labels: m.labels.filter((x) => x !== id) }))
+    if (memoFix.length > 0) {
+      const byId = new Map(memoFix.map((m) => [m.id, m]))
+      setMemos((prev) => prev.map((m) => byId.get(m.id) ?? m))
+      await db.memos.putMany(memoFix)
+    }
+    const tplFix = templatesRef.current
+      .filter((t) => t.defaultLabels.includes(id))
+      .map((t) => ({ ...t, defaultLabels: t.defaultLabels.filter((x) => x !== id) }))
+    if (tplFix.length > 0) {
+      const byId = new Map(tplFix.map((t) => [t.id, t]))
+      setTemplates((prev) => prev.map((t) => byId.get(t.id) ?? t))
+      await db.templates.putMany(tplFix)
+    }
   }, [])
 
   // --- 単価計算・日次ログ(変更なし)----------------------------------------
@@ -384,15 +416,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const updateGoodNew = useCallback(async (id: string, text: string) => {
-    let next: GoodNew | undefined
-    setGoodNews((prev) =>
-      prev.map((g) => {
-        if (g.id !== id) return g
-        next = { ...g, text, updatedAt: Date.now() }
-        return next
-      })
-    )
-    if (next) await db.goodNews.put(next)
+    const current = goodNewsRef.current.find((g) => g.id === id)
+    if (!current) return
+    const next: GoodNew = { ...current, text, updatedAt: Date.now() }
+    setGoodNews((prev) => prev.map((g) => (g.id === id ? next : g)))
+    await db.goodNews.put(next)
   }, [])
 
   const removeGoodNew = useCallback(async (id: string) => {
@@ -409,20 +437,82 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const updateActivityLog = useCallback(async (id: string, text: string) => {
-    let next: ActivityLog | undefined
-    setActivityLogs((prev) =>
-      prev.map((a) => {
-        if (a.id !== id) return a
-        next = { ...a, text, updatedAt: Date.now() }
-        return next
-      })
-    )
-    if (next) await db.activityLogs.put(next)
+    const current = activityLogsRef.current.find((a) => a.id === id)
+    if (!current) return
+    const next: ActivityLog = { ...current, text, updatedAt: Date.now() }
+    setActivityLogs((prev) => prev.map((a) => (a.id === id ? next : a)))
+    await db.activityLogs.put(next)
   }, [])
 
   const removeActivityLog = useCallback(async (id: string) => {
     setActivityLogs((prev) => prev.filter((a) => a.id !== id))
     await db.activityLogs.remove(id)
+  }, [])
+
+  // --- 価格記録 -------------------------------------------------------------
+
+  const addProduct = useCallback(async (input: ProductInput) => {
+    const now = Date.now()
+    const product: Product = {
+      id: uid(),
+      name: input.name,
+      unitMode: input.unitMode,
+      memo: input.memo || undefined,
+      createdAt: now,
+      updatedAt: now
+    }
+    await db.products.put(product)
+    setProducts((prev) => [product, ...prev])
+    return product
+  }, [])
+
+  const updateProduct = useCallback(async (id: string, patch: Partial<ProductInput>) => {
+    const current = productsRef.current.find((p) => p.id === id)
+    if (!current) return
+    const next: Product = { ...current, ...patch, updatedAt: Date.now() }
+    setProducts((prev) => prev.map((p) => (p.id === id ? next : p)))
+    await db.products.put(next)
+  }, [])
+
+  const removeProduct = useCallback(async (id: string) => {
+    setProducts((prev) => prev.filter((p) => p.id !== id))
+    setPriceRecords((prev) => prev.filter((r) => r.productId !== id))
+    await db.products.remove(id)
+    await db.deletePriceRecordsByProduct(id)
+  }, [])
+
+  const addPriceRecord = useCallback(async (productId: string, input: PriceRecordInput) => {
+    const now = Date.now()
+    const record: PriceRecord = {
+      id: uid(),
+      productId,
+      store: input.store,
+      price: input.price,
+      amount: input.amount,
+      quantity: input.quantity,
+      taxMode: input.taxMode,
+      discountRate: input.discountRate,
+      boughtAt: input.boughtAt,
+      memo: input.memo || undefined,
+      createdAt: now,
+      updatedAt: now
+    }
+    await db.priceRecords.put(record)
+    setPriceRecords((prev) => [...prev, record])
+    return record
+  }, [])
+
+  const updatePriceRecord = useCallback(async (id: string, patch: Partial<PriceRecordInput>) => {
+    const current = priceRecordsRef.current.find((r) => r.id === id)
+    if (!current) return
+    const next: PriceRecord = { ...current, ...patch, updatedAt: Date.now() }
+    setPriceRecords((prev) => prev.map((r) => (r.id === id ? next : r)))
+    await db.priceRecords.put(next)
+  }, [])
+
+  const removePriceRecord = useCallback(async (id: string) => {
+    setPriceRecords((prev) => prev.filter((r) => r.id !== id))
+    await db.priceRecords.remove(id)
   }, [])
 
   // --- 設定・バックアップ ---------------------------------------------------
@@ -445,6 +535,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setComparisons([...d.comparisons].sort((a, b) => b.savedAt - a.savedAt))
     setGoodNews([...d.goodNews].sort((a, b) => b.createdAt - a.createdAt))
     setActivityLogs([...d.activityLogs].sort((a, b) => b.createdAt - a.createdAt))
+    setProducts([...d.products].sort((a, b) => b.updatedAt - a.updatedAt))
+    setPriceRecords(d.priceRecords)
   }, [])
 
   const importReplace = useCallback(
@@ -476,6 +568,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setActivityLogs((prev) =>
       mergeById(prev, data.activityLogs).sort((a, b) => b.createdAt - a.createdAt)
     )
+    setProducts((prev) => mergeById(prev, data.products).sort((a, b) => b.updatedAt - a.updatedAt))
+    setPriceRecords((prev) => mergeById(prev, data.priceRecords))
   }, [])
 
   const eraseAll = useCallback(async () => {
@@ -489,6 +583,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setComparisons([])
     setGoodNews([])
     setActivityLogs([])
+    setProducts([])
+    setPriceRecords([])
     setArchiveDaysState(DEFAULT_ARCHIVE_DAYS)
     setLastExportAt(null)
   }, [])
@@ -502,6 +598,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       comparisons,
       goodNews,
       activityLogs,
+      products,
+      priceRecords,
       archiveDays,
       lastExportAt,
       addMemo,
@@ -526,6 +624,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addActivityLog,
       updateActivityLog,
       removeActivityLog,
+      addProduct,
+      updateProduct,
+      removeProduct,
+      addPriceRecord,
+      updatePriceRecord,
+      removePriceRecord,
       setArchiveDays,
       markExported,
       importReplace,
@@ -533,13 +637,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       eraseAll
     }),
     [
-      ready, memos, templates, labels, comparisons, goodNews, activityLogs, archiveDays, lastExportAt,
+      ready, memos, templates, labels, comparisons, goodNews, activityLogs,
+      products, priceRecords, archiveDays, lastExportAt,
       addMemo, draftFromTemplate, updateMemo, toggleDone, removeMemo, applySortOrders,
       addTemplate, updateTemplate, removeTemplate, duplicateTemplate, templateFromMemo,
       addLabel, updateLabel, removeLabel,
       saveComparison, removeComparison,
       addGoodNew, updateGoodNew, removeGoodNew,
       addActivityLog, updateActivityLog, removeActivityLog,
+      addProduct, updateProduct, removeProduct,
+      addPriceRecord, updatePriceRecord, removePriceRecord,
       setArchiveDays, markExported, importReplace, importMerge, eraseAll
     ]
   )

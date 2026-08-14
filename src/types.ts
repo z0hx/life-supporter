@@ -164,6 +164,33 @@ export interface Comparison {
   savedAt: number
 }
 
+// 商品ごとの価格記録(いつ・どの店で・いくらだったか)
+export interface Product {
+  id: string
+  name: string
+  unitMode: UnitMode // その商品の記録に共通する単位(比較の基準を揃える)
+  memo?: string
+  createdAt: number
+  updatedAt: number
+}
+
+export type TaxMode = 'exclusive' | 'inclusive'
+
+export interface PriceRecord {
+  id: string
+  productId: string
+  store: string
+  price: number
+  amount: number
+  quantity?: number // 個数(セット売りを想定。未指定は1として扱う)
+  taxMode?: TaxMode // 税別/税込み(未指定は税別として扱う)
+  discountRate?: number // ポイント還元・割引率(%)。実質価格での比較に使う
+  boughtAt: number // その価格だった日(過去日を指定して記録できる)
+  memo?: string
+  createdAt: number
+  updatedAt: number
+}
+
 // ---------------------------------------------------------------------------
 // 表示設定
 // ---------------------------------------------------------------------------
@@ -175,5 +202,14 @@ export type SortDir = 'desc' | 'asc'
 export interface ViewSettings {
   groupBy: GroupBy
   sortBy: SortBy
+  sortDir: SortDir
+  showDone: boolean // 完了済みメモを一覧に出すか
+}
+
+// 商品ごとの価格記録一覧の並び順。boughtAt は購入日、createdAt は記録を入力した日
+export type PriceSortBy = 'unitPrice' | 'boughtAt' | 'createdAt'
+
+export interface PriceSort {
+  sortBy: PriceSortBy
   sortDir: SortDir
 }

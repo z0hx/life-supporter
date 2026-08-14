@@ -57,6 +57,11 @@ export function MemoList({ navigate }: { navigate: (r: string) => void }) {
     () => buildGroups(filtered, labels, templates, vs),
     [filtered, labels, templates, vs]
   )
+  // 非表示にしている完了済みの件数(「消えた」と誤解させないための案内に使う)
+  const hiddenDoneCount = useMemo(
+    () => (vs.showDone ? 0 : filtered.filter((m) => !m.archived && m.done).length),
+    [filtered, vs.showDone]
+  )
   const currentSort =
     SORT_OPTIONS.find((o) =>
       vs.sortBy === 'manual'
@@ -153,7 +158,9 @@ export function MemoList({ navigate }: { navigate: (r: string) => void }) {
           <div className="memo-empty">
             {query
               ? '見つかりませんでした'
-              : 'メモはまだありません。\n「＋ メモを追加」から始めましょう'}
+              : hiddenDoneCount > 0
+                ? '未完了のメモはありません'
+                : 'メモはまだありません。\n「＋ メモを追加」から始めましょう'}
           </div>
         )}
         {groups.map((g) => {
@@ -196,6 +203,14 @@ export function MemoList({ navigate }: { navigate: (r: string) => void }) {
             </section>
           )
         })}
+        {hiddenDoneCount > 0 && (
+          <button
+            className="hidden-done-note"
+            onClick={() => setVs((v) => ({ ...v, showDone: true }))}
+          >
+            完了済み {hiddenDoneCount}件は非表示中 — 表示する
+          </button>
+        )}
       </div>
 
       <button className="fab" onClick={() => setPicking(true)}>
@@ -231,6 +246,19 @@ export function MemoList({ navigate }: { navigate: (r: string) => void }) {
                 </button>
               )
             })}
+            {/* 並べ替えとは別の表示設定なので、区切ってスイッチで示す */}
+            <button
+              className="sort-menu-switch"
+              role="switch"
+              aria-checked={vs.showDone}
+              onClick={() => {
+                setVs((v) => ({ ...v, showDone: !v.showDone }))
+                setSortMenuOpen(false)
+              }}
+            >
+              <span>完了済みを表示</span>
+              <span className={`switch${vs.showDone ? ' switch--on' : ''}`} />
+            </button>
           </div>
         </div>
       )}
