@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { Memo, SortBy, SortDir, ViewSettings } from '../types'
-import { useStore } from '../store'
-import { buildGroups, tagStyle, categoryStyle, type MemoGroup } from '../lib/memoGroups'
+import type { Memo, SortBy, SortDir, Template, ViewSettings } from '../types'
+import { useStore, type MemoDraft } from '../store'
+import { buildGroups, labelStyle, type MemoGroup } from '../lib/memoGroups'
+import { memoSearchText, memoSummary } from '../fields'
 import {
   loadCollapsedGroups,
   loadViewSettings,
@@ -11,7 +12,8 @@ import {
 import { relativeTime } from '../lib/format'
 import { RoundCheck } from '../components/RoundCheck'
 import { Segmented } from '../components/Segmented'
-import { MemoModal } from './MemoModal'
+import { MemoEditor } from './MemoEditor'
+import { TemplatePicker } from './TemplatePicker'
 
 interface SortOption {
   label: string
@@ -28,36 +30,44 @@ const SORT_OPTIONS: SortOption[] = [
   { label: '手動(ドラッグで並べ替え)', short: '⠿ 手動', sortBy: 'manual', sortDir: 'desc' }
 ]
 
+type Editing = { mode: 'edit'; memo: Memo } | { mode: 'new'; draft: MemoDraft } | null
+
 export function MemoList({ navigate }: { navigate: (r: string) => void }) {
   const store = useStore()
-  const { memos, categories } = store
+  const { memos, labels, templates } = store
   const [vs, setVs] = useState<ViewSettings>(loadViewSettings)
   const [collapsed, setCollapsed] = useState<string[]>(loadCollapsedGroups)
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const [editing, setEditing] = useState<Memo | 'new' | null>(null)
+  const [picking, setPicking] = useState(false)
+  const [editing, setEditing] = useState<Editing>(null)
 
   // グルーピング/ソートの選択状態は永続化し次回起動時に復元
   useEffect(() => saveViewSettings(vs), [vs])
   useEffect(() => saveCollapsedGroups(collapsed), [collapsed])
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return memos
     const q = query.trim().toLowerCase()
-    return memos.filter(
-      (m) =>
-        m.title.toLowerCase().includes(q) ||
-        (m.note ?? '').toLowerCase().includes(q) ||
-        m.tags.some((t) => t.toLowerCase().includes(q))
-    )
+    if (!q) return memos
+    return memos.filter((m) => memoSearchText(m).includes(q))
   }, [memos, query])
 
-  const groups = useMemo(() => buildGroups(filtered, categories, vs), [filtered, categories, vs])
+  const groups = useMemo(
+    () => buildGroups(filtered, labels, templates, vs),
+    [filtered, labels, templates, vs]
+  )
   const currentSort =
     SORT_OPTIONS.find((o) =>
-      vs.sortBy === 'manual' ? o.sortBy === 'manual' : o.sortBy === vs.sortBy && o.sortDir === vs.sortDir
+      vs.sortBy === 'manual'
+        ? o.sortBy === 'manual'
+        : o.sortBy === vs.sortBy && o.sortDir === vs.sortDir
     ) ?? SORT_OPTIONS[2]
+
+  const startNew = (t: Template) => {
+    setPicking(false)
+    setEditing({ mode: 'new', draft: store.draftFromTemplate(t) })
+  }
 
   // 手動ソート時のグループ内並べ替え(未完了のみ対象)
   const reorderInGroup = (group: MemoGroup, memoId: string, delta: number) => {
@@ -75,6 +85,14 @@ export function MemoList({ navigate }: { navigate: (r: string) => void }) {
     store.applySortOrders(arr.map((m, i) => ({ id: m.id, sortOrder: orders[i] })))
   }
 
+  if (editing) {
+    return editing.mode === 'edit' ? (
+      <MemoEditor memo={editing.memo} onClose={() => setEditing(null)} />
+    ) : (
+      <MemoEditor draft={editing.draft} onClose={() => setEditing(null)} />
+    )
+  }
+
   return (
     <div className="screen">
       <header className="screen-header">
@@ -82,6 +100,14 @@ export function MemoList({ navigate }: { navigate: (r: string) => void }) {
           ‹
         </button>
         <h1 className="screen-title">メモ</h1>
+        <button
+          className="header-action"
+          aria-label="テンプレート"
+          style={{ fontSize: 17 }}
+          onClick={() => navigate('/templates')}
+        >
+          📋
+        </button>
         <button
           className="header-action"
           style={{ color: searchOpen ? 'var(--accent)' : 'var(--ink-3)', fontSize: 17 }}
@@ -99,7 +125,7 @@ export function MemoList({ navigate }: { navigate: (r: string) => void }) {
         <div className="search-bar">
           <input
             className="search-input"
-            placeholder="タイトル・タグ・メモを検索…"
+            placeholder="タイトル・項目の内容を検索…"
             value={query}
             autoFocus
             onChange={(e) => setQuery(e.target.value)}
@@ -110,8 +136,8 @@ export function MemoList({ navigate }: { navigate: (r: string) => void }) {
       <div className="memo-controls">
         <Segmented
           options={[
-            { value: 'category', label: 'カテゴリ' },
-            { value: 'tag', label: 'タグ' },
+            { value: 'label', label: 'ラベル' },
+            { value: 'template', label: 'テンプレ' },
             { value: 'none', label: 'なし' }
           ]}
           value={vs.groupBy}
@@ -125,7 +151,9 @@ export function MemoList({ navigate }: { navigate: (r: string) => void }) {
       <div className="memo-scroll">
         {groups.length === 0 && (
           <div className="memo-empty">
-            {query ? '見つかりませんでした' : 'メモはまだありません。\n「＋ メモを追加」から始めましょう'}
+            {query
+              ? '見つかりませんでした'
+              : 'メモはまだありません。\n「＋ メモを追加」から始めましょう'}
           </div>
         )}
         {groups.map((g) => {
@@ -152,11 +180,13 @@ export function MemoList({ navigate }: { navigate: (r: string) => void }) {
                     <MemoRow
                       key={m.id}
                       memo={m}
-                      showCategory={vs.groupBy !== 'category'}
+                      showLabels={vs.groupBy !== 'label'}
+                      labelNames={m.labels
+                        .map((id) => labels.find((l) => l.id === id))
+                        .filter((l): l is NonNullable<typeof l> => !!l)}
                       manualSort={vs.sortBy === 'manual' && !m.done}
-                      categoryLabel={categories.find((c) => c.id === m.category)?.label ?? 'その他'}
                       onToggle={() => store.toggleDone(m.id)}
-                      onOpen={() => setEditing(m)}
+                      onOpen={() => setEditing({ mode: 'edit', memo: m })}
                       onDelete={() => store.removeMemo(m.id)}
                       onReorder={(delta) => reorderInGroup(g, m.id, delta)}
                     />
@@ -168,9 +198,20 @@ export function MemoList({ navigate }: { navigate: (r: string) => void }) {
         })}
       </div>
 
-      <button className="fab" onClick={() => setEditing('new')}>
+      <button className="fab" onClick={() => setPicking(true)}>
         ＋ メモを追加
       </button>
+
+      {picking && (
+        <TemplatePicker
+          onPick={startNew}
+          onClose={() => setPicking(false)}
+          onManage={() => {
+            setPicking(false)
+            navigate('/templates')
+          }}
+        />
+      )}
 
       {sortMenuOpen && (
         <div className="menu-overlay" onClick={() => setSortMenuOpen(false)}>
@@ -193,10 +234,6 @@ export function MemoList({ navigate }: { navigate: (r: string) => void }) {
           </div>
         </div>
       )}
-
-      {editing && (
-        <MemoModal memo={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />
-      )}
     </div>
   )
 }
@@ -205,18 +242,18 @@ const SWIPE_OPEN = -76
 
 function MemoRow({
   memo,
-  showCategory,
+  showLabels,
+  labelNames,
   manualSort,
-  categoryLabel,
   onToggle,
   onOpen,
   onDelete,
   onReorder
 }: {
   memo: Memo
-  showCategory: boolean
+  showLabels: boolean
+  labelNames: { id: string; name: string; emoji?: string; color?: string }[]
   manualSort: boolean
-  categoryLabel: string
   onToggle: () => void
   onOpen: () => void
   onDelete: () => void
@@ -228,6 +265,7 @@ function MemoRow({
   const [dragY, setDragY] = useState<number | null>(null)
   const gesture = useRef<{ x: number; y: number; mode: 'none' | 'swipe' | 'cancel' } | null>(null)
   const suppressClick = useRef(false)
+  const summary = memoSummary(memo)
 
   const onPointerDown = (e: React.PointerEvent) => {
     if ((e.target as HTMLElement).closest('.drag-handle, .check, .memo-row-delete')) return
@@ -323,24 +361,23 @@ function MemoRow({
           <div className="memo-row-title">{memo.title}</div>
           <div className="memo-row-meta">
             {memo.priority === 'high' && !memo.done && <span className="priority-dot">高</span>}
-            {showCategory && (
-              <span
-                className="tag-chip"
-                style={{
-                  color: categoryStyle(memo.category).color,
-                  background: categoryStyle(memo.category).bg
-                }}
-              >
-                {categoryLabel}
-              </span>
-            )}
-            {memo.tags.map((t) => (
-              <span
-                key={t}
-                className="tag-chip"
-                style={{ color: tagStyle(t).color, background: tagStyle(t).bg }}
-              >
-                #{t}
+            {showLabels &&
+              labelNames.map((l) => (
+                <span
+                  key={l.id}
+                  className="tag-chip"
+                  style={{
+                    color: l.color ?? labelStyle(l.id).color,
+                    background: labelStyle(l.id).bg
+                  }}
+                >
+                  {l.emoji ? `${l.emoji} ` : ''}
+                  {l.name}
+                </span>
+              ))}
+            {summary.map((s, i) => (
+              <span key={i} className="memo-row-summary">
+                {s}
               </span>
             ))}
             <span className="memo-row-time">{relativeTime(memo.updatedAt)}</span>

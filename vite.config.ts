@@ -30,7 +30,22 @@ export default defineConfig(({ command }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // 一度表示した地図タイルはオフラインでも再表示できるようにする。
+        // OSM の利用規約により、まだ見ていない範囲を先読みすることはしない。
+        // maxEntries の上限は、タイルがストレージを圧迫して
+        // メモ本体ごと iOS Safari の削除対象になるのを避けるため
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/([abc]\.)?tile\.openstreetmap\.org\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'osm-tiles',
+              expiration: { maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] }
+            }
+          }
+        ]
       }
     })
   ]

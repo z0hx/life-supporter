@@ -5,7 +5,7 @@ const VS_KEY = 'life-supporter:viewSettings'
 const COLLAPSED_KEY = 'life-supporter:collapsedGroups'
 
 export const DEFAULT_VIEW_SETTINGS: ViewSettings = {
-  groupBy: 'category',
+  groupBy: 'label',
   sortBy: 'updatedAt',
   sortDir: 'desc'
 }
@@ -16,7 +16,7 @@ export function loadViewSettings(): ViewSettings {
     if (!raw) return DEFAULT_VIEW_SETTINGS
     const v = JSON.parse(raw)
     if (
-      ['category', 'tag', 'none'].includes(v.groupBy) &&
+      ['label', 'template', 'none'].includes(v.groupBy) &&
       ['createdAt', 'updatedAt', 'manual'].includes(v.sortBy) &&
       ['desc', 'asc'].includes(v.sortDir)
     ) {

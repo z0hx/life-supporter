@@ -3,6 +3,7 @@ import { StoreProvider, useStore } from './store'
 import { ToastProvider } from './components/Toast'
 import { Home } from './screens/Home'
 import { MemoList } from './screens/MemoList'
+import { TemplateList } from './screens/Templates'
 import { Calc, EMPTY_DRAFT, type CalcDraft } from './screens/Calc'
 import { History } from './screens/History'
 import { GoodNew } from './screens/GoodNew'
@@ -31,6 +32,8 @@ function Router() {
     <div className="app">
       {route === '/memos' ? (
         <MemoList navigate={navigate} />
+      ) : route === '/templates' ? (
+        <TemplateList navigate={navigate} />
       ) : route === '/calc' ? (
         <Calc draft={calcDraft} setDraft={setCalcDraft} navigate={navigate} />
       ) : route === '/history' ? (
