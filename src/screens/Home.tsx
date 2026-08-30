@@ -3,6 +3,7 @@ import { formatToday, isSameDay } from '../lib/format'
 import { compareMemos } from '../lib/memoGroups'
 import { findCheapest, unitModeDef, unitPrice } from '../lib/calc'
 import { DEFAULT_VIEW_SETTINGS } from '../lib/viewSettings'
+import { APP_VERSION } from '../lib/version'
 
 function greeting() {
   const h = new Date().getHours()
@@ -108,7 +109,7 @@ export function Home({ navigate }: { navigate: (r: string) => void }) {
       )}
       <div className="home-footer">
         <button className="home-settings-link" onClick={() => navigate('/settings')}>
-          ⚙ 設定 · v1.0
+          ⚙ 設定 · v{APP_VERSION}
         </button>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { needsBackupReminder, useStore } from '../store'
 import { buildBackup, shareOrDownload, validateBackup, type BackupFile } from '../lib/backup'
 import type { DataSet } from '../lib/db'
 import { formatDate } from '../lib/format'
+import { APP_VERSION } from '../lib/version'
 import { Dialog } from '../components/Dialog'
 import { Segmented } from '../components/Segmented'
 import { useToast } from '../components/Toast'
@@ -237,7 +238,7 @@ export function Settings({ navigate }: { navigate: (r: string) => void }) {
           />
         </section>
 
-        <div className="settings-version">life-supporter v2.0 · ローカルに保存されます</div>
+        <div className="settings-version">life-supporter v{APP_VERSION} · ローカルに保存されます</div>
       </div>
 
       {pendingImport && (
